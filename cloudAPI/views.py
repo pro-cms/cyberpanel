@@ -427,6 +427,51 @@ def router(request):
             return cm.saveWebsiteLimits(request)
         elif controller == 'getUsageData':
             return cm.getUsageData(request)
+        # ===========================================
+        # FILE MANAGER API ENDPOINTS
+        # ===========================================
+        elif controller == 'listFilesForTable':
+            return cm.listFilesForTable(request)
+        elif controller == 'listFiles':
+            return cm.listFiles(request)
+        elif controller == 'createNewFile':
+            return cm.createNewFile(request)
+        elif controller == 'createNewFolder':
+            return cm.createNewFolder(request)
+        elif controller == 'deleteFolderOrFile':
+            return cm.deleteFolderOrFile(request)
+        elif controller == 'restoreFile':
+            return cm.restoreFile(request)
+        elif controller == 'copyFile':
+            return cm.copyFile(request)
+        elif controller == 'moveFile':
+            return cm.moveFile(request)
+        elif controller == 'renameFile':
+            return cm.renameFile(request)
+        elif controller == 'readFileContents':
+            return cm.readFileContents(request)
+        elif controller == 'writeFileContents':
+            return cm.writeFileContents(request)
+        elif controller == 'uploadFile':
+            return cm.uploadFile(request)
+        elif controller == 'extractArchive':
+            return cm.extractArchive(request)
+        elif controller == 'compressFiles':
+            return cm.compressFiles(request)
+        elif controller == 'changeFilePermissions':
+            return cm.changeFilePermissions(request)
+        elif controller == 'fixFilePermissions':
+            return cm.fixFilePermissions(request)
+        elif controller == 'downloadFile':
+            return cm.downloadFile(request)
+        elif controller == 'getFileInfo':
+            return cm.getFileInfo(request)
+        elif controller == 'searchFiles':
+            return cm.searchFiles(request)
+        elif controller == 'getTrashContents':
+            return cm.getTrashContents(request)
+        elif controller == 'emptyTrash':
+            return cm.emptyTrash(request)
         elif controller == 'installN8N':
             return cm.installN8N()
         elif controller == 'getN8NInstallStatus':

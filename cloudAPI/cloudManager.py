@@ -3038,6 +3038,383 @@ class CloudManager:
             final_json = json.dumps(final_dic)
             return HttpResponse(final_json)
 
+    # ===========================================
+    # FILE MANAGER API METHODS
+    # ===========================================
+
+    def listFilesForTable(self, request):
+        """List files and folders for table display"""
+        try:
+            request.session['userID'] = self.admin.pk
+            from filemanager.filemanager import FileManager
+            fm = FileManager(request, self.data)
+            return fm.listForTable()
+        except BaseException as msg:
+            return self.ajaxPre(0, str(msg))
+
+    def listFiles(self, request):
+        """List files and folders"""
+        try:
+            request.session['userID'] = self.admin.pk
+            from filemanager.filemanager import FileManager
+            fm = FileManager(request, self.data)
+            return fm.list()
+        except BaseException as msg:
+            return self.ajaxPre(0, str(msg))
+
+    def createNewFile(self, request):
+        """Create a new file"""
+        try:
+            request.session['userID'] = self.admin.pk
+            from filemanager.filemanager import FileManager
+            fm = FileManager(request, self.data)
+            return fm.createNewFile()
+        except BaseException as msg:
+            return self.ajaxPre(0, str(msg))
+
+    def createNewFolder(self, request):
+        """Create a new folder"""
+        try:
+            request.session['userID'] = self.admin.pk
+            from filemanager.filemanager import FileManager
+            fm = FileManager(request, self.data)
+            return fm.createNewFolder()
+        except BaseException as msg:
+            return self.ajaxPre(0, str(msg))
+
+    def deleteFolderOrFile(self, request):
+        """Delete a folder or file"""
+        try:
+            request.session['userID'] = self.admin.pk
+            from filemanager.filemanager import FileManager
+            fm = FileManager(request, self.data)
+            return fm.deleteFolderOrFile()
+        except BaseException as msg:
+            return self.ajaxPre(0, str(msg))
+
+    def restoreFile(self, request):
+        """Restore a file from trash"""
+        try:
+            request.session['userID'] = self.admin.pk
+            from filemanager.filemanager import FileManager
+            fm = FileManager(request, self.data)
+            return fm.restore()
+        except BaseException as msg:
+            return self.ajaxPre(0, str(msg))
+
+    def copyFile(self, request):
+        """Copy a file or folder"""
+        try:
+            request.session['userID'] = self.admin.pk
+            from filemanager.filemanager import FileManager
+            fm = FileManager(request, self.data)
+            return fm.copy()
+        except BaseException as msg:
+            return self.ajaxPre(0, str(msg))
+
+    def moveFile(self, request):
+        """Move a file or folder"""
+        try:
+            request.session['userID'] = self.admin.pk
+            from filemanager.filemanager import FileManager
+            fm = FileManager(request, self.data)
+            return fm.move()
+        except BaseException as msg:
+            return self.ajaxPre(0, str(msg))
+
+    def renameFile(self, request):
+        """Rename a file or folder"""
+        try:
+            request.session['userID'] = self.admin.pk
+            from filemanager.filemanager import FileManager
+            fm = FileManager(request, self.data)
+            return fm.rename()
+        except BaseException as msg:
+            return self.ajaxPre(0, str(msg))
+
+    def readFileContents(self, request):
+        """Read file contents"""
+        try:
+            request.session['userID'] = self.admin.pk
+            from filemanager.filemanager import FileManager
+            fm = FileManager(request, self.data)
+            return fm.readFileContents()
+        except BaseException as msg:
+            return self.ajaxPre(0, str(msg))
+
+    def writeFileContents(self, request):
+        """Write file contents"""
+        try:
+            request.session['userID'] = self.admin.pk
+            from filemanager.filemanager import FileManager
+            fm = FileManager(request, self.data)
+            return fm.writeFileContents()
+        except BaseException as msg:
+            return self.ajaxPre(0, str(msg))
+
+    def uploadFile(self, request):
+        """Upload a file"""
+        try:
+            request.session['userID'] = self.admin.pk
+            from filemanager.filemanager import FileManager
+            fm = FileManager(request, self.data)
+            return fm.upload()
+        except BaseException as msg:
+            return self.ajaxPre(0, str(msg))
+
+    def extractArchive(self, request):
+        """Extract an archive file"""
+        try:
+            request.session['userID'] = self.admin.pk
+            from filemanager.filemanager import FileManager
+            fm = FileManager(request, self.data)
+            return fm.extract()
+        except BaseException as msg:
+            return self.ajaxPre(0, str(msg))
+
+    def compressFiles(self, request):
+        """Compress files into an archive"""
+        try:
+            request.session['userID'] = self.admin.pk
+            from filemanager.filemanager import FileManager
+            fm = FileManager(request, self.data)
+            return fm.compress()
+        except BaseException as msg:
+            return self.ajaxPre(0, str(msg))
+
+    def changeFilePermissions(self, request):
+        """Change file permissions"""
+        try:
+            request.session['userID'] = self.admin.pk
+            from filemanager.filemanager import FileManager
+            fm = FileManager(request, self.data)
+            return fm.changePermissions()
+        except BaseException as msg:
+            return self.ajaxPre(0, str(msg))
+
+    def fixFilePermissions(self, request):
+        """Fix file permissions for a domain"""
+        try:
+            request.session['userID'] = self.admin.pk
+            from filemanager.filemanager import FileManager
+            fm = FileManager(request, self.data)
+            return fm.fixPermissions(self.data.get('domainName'))
+        except BaseException as msg:
+            return self.ajaxPre(0, str(msg))
+
+    def downloadFile(self, request):
+        """Download a file"""
+        try:
+            request.session['userID'] = self.admin.pk
+            from urllib.parse import quote
+            from django.utils.encoding import iri_to_uri
+            from django.http import HttpResponse
+
+            fileToDownload = request.build_absolute_uri().split('fileToDownload')[1][1:]
+            fileToDownload = iri_to_uri(fileToDownload)
+
+            domainName = self.data.get('domainName')
+
+            currentACL = ACLManager.loadedACL(self.admin.pk)
+
+            if ACLManager.checkOwnership(domainName, self.admin, currentACL) == 1:
+                pass
+            else:
+                return ACLManager.loadErrorJson('permissionsChanged', 0)
+
+            homePath = '/home/%s' % (domainName)
+
+            if fileToDownload.find('..') > -1 or fileToDownload.find(homePath) == -1:
+                return HttpResponse("Unauthorized access.")
+
+            response = HttpResponse(content_type='application/force-download')
+            response['Content-Disposition'] = 'attachment; filename=%s' % (fileToDownload.split('/')[-1])
+            response['X-LiteSpeed-Location'] = '%s' % (fileToDownload)
+
+            return response
+
+        except BaseException as msg:
+            return self.ajaxPre(0, str(msg))
+
+    def getFileInfo(self, request):
+        """Get detailed file information"""
+        try:
+            request.session['userID'] = self.admin.pk
+            import os
+            import stat
+            from datetime import datetime
+
+            filePath = self.data.get('filePath')
+            domainName = self.data.get('domainName')
+
+            currentACL = ACLManager.loadedACL(self.admin.pk)
+
+            if ACLManager.checkOwnership(domainName, self.admin, currentACL) == 1:
+                pass
+            else:
+                return ACLManager.loadErrorJson()
+
+            if not os.path.exists(filePath):
+                return self.ajaxPre(0, 'File does not exist')
+
+            stat_info = os.stat(filePath)
+            
+            file_info = {
+                'name': os.path.basename(filePath),
+                'path': filePath,
+                'size': stat_info.st_size,
+                'size_human': self._format_file_size(stat_info.st_size),
+                'permissions': oct(stat_info.st_mode)[-3:],
+                'owner': stat_info.st_uid,
+                'group': stat_info.st_gid,
+                'created': datetime.fromtimestamp(stat_info.st_ctime).isoformat(),
+                'modified': datetime.fromtimestamp(stat_info.st_mtime).isoformat(),
+                'accessed': datetime.fromtimestamp(stat_info.st_atime).isoformat(),
+                'is_directory': stat.S_ISDIR(stat_info.st_mode),
+                'is_file': stat.S_ISREG(stat_info.st_mode),
+                'is_symlink': stat.S_ISLNK(stat_info.st_mode),
+                'readable': os.access(filePath, os.R_OK),
+                'writable': os.access(filePath, os.W_OK),
+                'executable': os.access(filePath, os.X_OK)
+            }
+
+            final_json = json.dumps({'status': 1, 'file_info': file_info})
+            return HttpResponse(final_json)
+
+        except BaseException as msg:
+            return self.ajaxPre(0, str(msg))
+
+    def searchFiles(self, request):
+        """Search for files and folders"""
+        try:
+            request.session['userID'] = self.admin.pk
+            import os
+            import fnmatch
+            from datetime import datetime
+
+            searchPath = self.data.get('searchPath', '/')
+            searchTerm = self.data.get('searchTerm', '')
+            searchType = self.data.get('searchType', 'all')  # all, files, folders
+            domainName = self.data.get('domainName')
+
+            currentACL = ACLManager.loadedACL(self.admin.pk)
+
+            if ACLManager.checkOwnership(domainName, self.admin, currentACL) == 1:
+                pass
+            else:
+                return ACLManager.loadErrorJson()
+
+            if not searchTerm:
+                return self.ajaxPre(0, 'Search term is required')
+
+            results = []
+            
+            for root, dirs, files in os.walk(searchPath):
+                # Filter by search type
+                if searchType == 'files':
+                    items = files
+                elif searchType == 'folders':
+                    items = dirs
+                else:
+                    items = files + dirs
+
+                for item in items:
+                    if fnmatch.fnmatch(item.lower(), f'*{searchTerm.lower()}*'):
+                        full_path = os.path.join(root, item)
+                        try:
+                            stat_info = os.stat(full_path)
+                            results.append({
+                                'name': item,
+                                'path': full_path,
+                                'size': stat_info.st_size,
+                                'size_human': self._format_file_size(stat_info.st_size),
+                                'is_directory': os.path.isdir(full_path),
+                                'modified': datetime.fromtimestamp(stat_info.st_mtime).isoformat()
+                            })
+                        except:
+                            continue
+
+            final_json = json.dumps({'status': 1, 'results': results, 'count': len(results)})
+            return HttpResponse(final_json)
+
+        except BaseException as msg:
+            return self.ajaxPre(0, str(msg))
+
+    def getTrashContents(self, request):
+        """Get contents of trash for a domain"""
+        try:
+            request.session['userID'] = self.admin.pk
+            from filemanager.models import Trash
+            from websiteFunctions.models import Websites
+
+            domainName = self.data.get('domainName')
+            
+            currentACL = ACLManager.loadedACL(self.admin.pk)
+
+            if ACLManager.checkOwnership(domainName, self.admin, currentACL) == 1:
+                pass
+            else:
+                return ACLManager.loadErrorJson()
+
+            try:
+                website = Websites.objects.get(domain=domainName)
+                trash_items = Trash.objects.filter(website=website)
+                
+                trash_data = []
+                for item in trash_items:
+                    trash_data.append({
+                        'id': item.id,
+                        'fileName': item.fileName,
+                        'originalPath': item.originalPath,
+                        'deleted_date': item.id  # Using ID as proxy for deletion date
+                    })
+                
+                final_json = json.dumps({'status': 1, 'trash_items': trash_data, 'count': len(trash_data)})
+                return HttpResponse(final_json)
+            except Websites.DoesNotExist:
+                return self.ajaxPre(0, 'Website not found')
+
+        except BaseException as msg:
+            return self.ajaxPre(0, str(msg))
+
+    def emptyTrash(self, request):
+        """Empty trash for a domain"""
+        try:
+            request.session['userID'] = self.admin.pk
+            from filemanager.models import Trash
+            from websiteFunctions.models import Websites
+
+            domainName = self.data.get('domainName')
+            
+            currentACL = ACLManager.loadedACL(self.admin.pk)
+
+            if ACLManager.checkOwnership(domainName, self.admin, currentACL) == 1:
+                pass
+            else:
+                return ACLManager.loadErrorJson()
+
+            try:
+                website = Websites.objects.get(domain=domainName)
+                Trash.objects.filter(website=website).delete()
+                
+                final_json = json.dumps({'status': 1, 'message': 'Trash emptied successfully'})
+                return HttpResponse(final_json)
+            except Websites.DoesNotExist:
+                return self.ajaxPre(0, 'Website not found')
+
+        except BaseException as msg:
+            return self.ajaxPre(0, str(msg))
+
+    def _format_file_size(self, size_bytes):
+        """Format file size in human readable format"""
+        if size_bytes == 0:
+            return "0B"
+        size_names = ["B", "KB", "MB", "GB", "TB"]
+        import math
+        i = int(math.floor(math.log(size_bytes, 1024)))
+        p = math.pow(1024, i)
+        s = round(size_bytes / p, 2)
+        return f"{s} {size_names[i]}"
 
     def installN8N(self):
         try:
