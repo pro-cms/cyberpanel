@@ -2768,6 +2768,38 @@ app.controller('listWebsites', function ($scope, $http, $window) {
         return site.version !== undefined;
     };
 
+    // Function to get SSL tooltip text
+    $scope.getSslTooltip = function(web) {
+        if (!web.ssl) return '';
+        
+        var tooltip = '';
+        if (web.ssl.issuer && web.ssl.issuer !== '') {
+            tooltip += 'Issuer: ' + web.ssl.issuer;
+        }
+        
+        if (web.ssl.days !== undefined) {
+            if (tooltip) tooltip += ' | ';
+            if (web.ssl.days < 0) {
+                tooltip += 'Expired ' + Math.abs(web.ssl.days) + ' days ago';
+            } else {
+                tooltip += 'Valid for ' + web.ssl.days + ' days';
+            }
+        }
+        
+        if (web.ssl.is_wildcard) {
+            if (tooltip) tooltip += ' | ';
+            tooltip += 'Wildcard Certificate';
+        }
+        
+        if (web.ssl.status === 'none') {
+            tooltip = 'No SSL certificate installed. Click "Issue SSL" to secure this site.';
+        } else if (web.ssl.status === 'self-signed') {
+            tooltip = 'Self-signed certificate detected. Not trusted by browsers.';
+        }
+        
+        return tooltip;
+    };
+
     // Initial fetch of websites
     $scope.getFurtherWebsitesFromDB = function () {
         $scope.loading = true; // Set loading to true when starting fetch
@@ -6055,6 +6087,38 @@ app.controller('listWebsites', function ($scope, $http, $window) {
     // Function to check if site data is loaded
     $scope.isDataLoaded = function(site) {
         return site.version !== undefined;
+    };
+
+    // Function to get SSL tooltip text
+    $scope.getSslTooltip = function(web) {
+        if (!web.ssl) return '';
+        
+        var tooltip = '';
+        if (web.ssl.issuer && web.ssl.issuer !== '') {
+            tooltip += 'Issuer: ' + web.ssl.issuer;
+        }
+        
+        if (web.ssl.days !== undefined) {
+            if (tooltip) tooltip += ' | ';
+            if (web.ssl.days < 0) {
+                tooltip += 'Expired ' + Math.abs(web.ssl.days) + ' days ago';
+            } else {
+                tooltip += 'Valid for ' + web.ssl.days + ' days';
+            }
+        }
+        
+        if (web.ssl.is_wildcard) {
+            if (tooltip) tooltip += ' | ';
+            tooltip += 'Wildcard Certificate';
+        }
+        
+        if (web.ssl.status === 'none') {
+            tooltip = 'No SSL certificate installed. Click "Issue SSL" to secure this site.';
+        } else if (web.ssl.status === 'self-signed') {
+            tooltip = 'Self-signed certificate detected. Not trusted by browsers.';
+        }
+        
+        return tooltip;
     };
 
     // Initial fetch of websites
@@ -9688,6 +9752,38 @@ app.controller('listWebsites', function ($scope, $http, $window) {
     // Function to check if site data is loaded
     $scope.isDataLoaded = function(site) {
         return site.version !== undefined;
+    };
+
+    // Function to get SSL tooltip text
+    $scope.getSslTooltip = function(web) {
+        if (!web.ssl) return '';
+        
+        var tooltip = '';
+        if (web.ssl.issuer && web.ssl.issuer !== '') {
+            tooltip += 'Issuer: ' + web.ssl.issuer;
+        }
+        
+        if (web.ssl.days !== undefined) {
+            if (tooltip) tooltip += ' | ';
+            if (web.ssl.days < 0) {
+                tooltip += 'Expired ' + Math.abs(web.ssl.days) + ' days ago';
+            } else {
+                tooltip += 'Valid for ' + web.ssl.days + ' days';
+            }
+        }
+        
+        if (web.ssl.is_wildcard) {
+            if (tooltip) tooltip += ' | ';
+            tooltip += 'Wildcard Certificate';
+        }
+        
+        if (web.ssl.status === 'none') {
+            tooltip = 'No SSL certificate installed. Click "Issue SSL" to secure this site.';
+        } else if (web.ssl.status === 'self-signed') {
+            tooltip = 'Self-signed certificate detected. Not trusted by browsers.';
+        }
+        
+        return tooltip;
     };
 
     // Initial fetch of websites

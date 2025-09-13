@@ -10,6 +10,7 @@ import socket
 
 from plogical.acl import ACLManager
 from plogical.processUtilities import ProcessUtilities
+
 try:
     from websiteFunctions.models import ChildDomains, Websites
 except:
@@ -17,7 +18,6 @@ except:
 
 
 class sslUtilities:
-
     Server_root = "/usr/local/lsws"
     redisConf = '/usr/local/lsws/conf/dvhost_redis.conf'
 
@@ -56,8 +56,7 @@ class sslUtilities:
             logging.CyberCPLogFileWriter.writeToFile(str(msg) + " [IO Error with main config file [checkSSLListener]]")
             return str(msg)
         return 0
-    
- 
+
     @staticmethod
     def checkSSLIPv6Listener():
         try:
@@ -67,7 +66,8 @@ class sslUtilities:
                     return 1
 
         except BaseException as msg:
-            logging.CyberCPLogFileWriter.writeToFile(str(msg) + " [IO Error with main config file [checkSSLIPv6Listener]]")
+            logging.CyberCPLogFileWriter.writeToFile(
+                str(msg) + " [IO Error with main config file [checkSSLIPv6Listener]]")
             return str(msg)
         return 0
 
@@ -84,7 +84,7 @@ class sslUtilities:
             return [0, "347 " + str(msg) + " [issueSSLForDomain]"]
 
     @staticmethod
-    def installSSLForDomain(virtualHostName, adminEmail='example@example.org'):
+    def installSSLForDomain(virtualHostName, adminEmail='domain@cyberpanel.net'):
 
         try:
             website = Websites.objects.get(domain=virtualHostName)
@@ -127,7 +127,7 @@ class sslUtilities:
                     writeDataToFile.writelines(certFile)
                     writeDataToFile.writelines(certChain)
                     writeDataToFile.writelines(sslProtocol)
-                    writeDataToFile.writelines(enableECDHE) 
+                    writeDataToFile.writelines(enableECDHE)
                     writeDataToFile.writelines(renegProtection)
                     writeDataToFile.writelines(sslSessionCache)
                     writeDataToFile.writelines(enableSpdy)
@@ -166,7 +166,7 @@ class sslUtilities:
                     writeDataToFile.writelines(certFile)
                     writeDataToFile.writelines(certChain)
                     writeDataToFile.writelines(sslProtocol)
-                    writeDataToFile.writelines(enableECDHE) 
+                    writeDataToFile.writelines(enableECDHE)
                     writeDataToFile.writelines(renegProtection)
                     writeDataToFile.writelines(sslSessionCache)
                     writeDataToFile.writelines(enableSpdy)
@@ -332,7 +332,6 @@ class sslUtilities:
                 ProcessUtilities.executioner(command)
                 return 1
 
-
     @staticmethod
     def FindIfDomainInCloudflare(virtualHostName):
         try:
@@ -403,6 +402,14 @@ class sslUtilities:
 
     @staticmethod
     def obtainSSLForADomain(virtualHostName, adminEmail, sslpath, aliasDomain=None):
+        # Replace example.org emails with domain-specific email
+        if adminEmail and ('example.org' in adminEmail or 'example.com' in adminEmail):
+            import re
+            # Remove special characters and create domain-based email
+            clean_domain = re.sub(r'[^a-zA-Z0-9]', '', virtualHostName)
+            adminEmail = f'{clean_domain}@cyberpanel.net'
+            logging.CyberCPLogFileWriter.writeToFile(f'Replacing invalid email with {adminEmail}')
+
         sender_email = 'root@%s' % (socket.gethostname())
 
         CF_Check = 0
@@ -418,7 +425,6 @@ class sslUtilities:
 
             if SSLProvider != 'Denial':
                 return 1, 'This domain already have a valid SSL.'
-
 
         CF_Check, message = sslUtilities.FindIfDomainInCloudflare(virtualHostName)
 
@@ -456,8 +462,8 @@ class sslUtilities:
                     command = acmePath + f" --issue -d {virtualHostName} -d *.{virtualHostName}" \
                               + ' --cert-file ' + existingCertPath + '/cert.pem' + ' --key-file ' + existingCertPath + '/privkey.pem' \
                               + ' --fullchain-file ' + existingCertPath + '/fullchain.pem' + f' --dns {DNS_TO_USE} -k ec-256 --force --server letsencrypt --dnssleep 20'
-                    #ResultText = open(logging.CyberCPLogFileWriter.fileName, 'r').read()
-                    #CurrentMessage = "Trying to obtain SSL for: " + virtualHostName + " and: www." + virtualHostName
+                    # ResultText = open(logging.CyberCPLogFileWriter.fileName, 'r').read()
+                    # CurrentMessage = "Trying to obtain SSL for: " + virtualHostName + " and: www." + virtualHostName
                     # logging.CyberCPLogFileWriter.writeToFile(CurrentMessage, 0)
 
                     logging.CyberCPLogFileWriter.writeToFile(command, 0)
@@ -480,7 +486,7 @@ class sslUtilities:
                                   + '/cert.pem' + ' --key-file ' + existingCertPath + '/privkey.pem' \
                                   + ' --fullchain-file ' + existingCertPath + '/fullchain.pem' + f' --dns {DNS_TO_USE} -k ec-256 --force --server letsencrypt --dnssleep 20'
 
-                        #ResultText = open(logging.CyberCPLogFileWriter.fileName, 'r').read()
+                        # ResultText = open(logging.CyberCPLogFileWriter.fileName, 'r').read()
                         CurrentMessage = '%s\nTrying to obtain SSL for: %s' % (finalText, virtualHostName)
 
                         finalText = '%s\nTrying to obtain SSL for: %s' % (finalText, virtualHostName)
@@ -494,8 +500,10 @@ class sslUtilities:
                                                                'SSL Notification for %s.' % (virtualHostName))
 
                     except subprocess.CalledProcessError:
-                        logging.CyberCPLogFileWriter.writeToFile('Failed to obtain SSL, issuing self-signed SSL for: ' + virtualHostName, 0)
-                        logging.CyberCPLogFileWriter.SendEmail(sender_email, adminEmail, 'Failed to obtain SSL, issuing self-signed SSL for: ' + virtualHostName,
+                        logging.CyberCPLogFileWriter.writeToFile(
+                            'Failed to obtain SSL, issuing self-signed SSL for: ' + virtualHostName, 0)
+                        logging.CyberCPLogFileWriter.SendEmail(sender_email, adminEmail,
+                                                               'Failed to obtain SSL, issuing self-signed SSL for: ' + virtualHostName,
                                                                'SSL Notification for %s.' % (virtualHostName))
                         return 0, output
             else:
@@ -510,7 +518,7 @@ class sslUtilities:
                         "Trying to obtain SSL for: " + virtualHostName + ", www." + virtualHostName + ", " + aliasDomain + " and www." + aliasDomain + ",")
 
                     command = acmePath + " --issue -d " + virtualHostName + " -d www." + virtualHostName \
-                              + ' -d ' + aliasDomain + ' -d www.' + aliasDomain\
+                              + ' -d ' + aliasDomain + ' -d www.' + aliasDomain \
                               + ' --cert-file ' + existingCertPath + '/cert.pem' + ' --key-file ' + existingCertPath + '/privkey.pem' \
                               + ' --fullchain-file ' + existingCertPath + '/fullchain.pem' + f' --dns {DNS_TO_USE} -k ec-256 --force --server letsencrypt --dnssleep 20'
 

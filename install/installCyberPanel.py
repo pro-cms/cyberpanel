@@ -9,6 +9,8 @@ import install
 from os.path import exists
 import time
 import install_utils
+import urllib.request
+import re
 
 # distros - using from install_utils
 centos = install_utils.centos
@@ -172,6 +174,34 @@ class InstallCyberPanel:
     def stdOut(message, log=0, exit=0, code=os.EX_OK):
         install_utils.stdOut(message, log, exit, code)
 
+    @staticmethod
+    def getLatestLSWSVersion():
+        """Fetch the latest LSWS Enterprise version from LiteSpeed's website"""
+        try:
+            # Try to fetch from the download page
+            url = "https://www.litespeedtech.com/products/litespeed-web-server/download"
+            req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+            with urllib.request.urlopen(req, timeout=10) as response:
+                html = response.read().decode('utf-8')
+
+            # Look for the latest version pattern: lsws-X.Y.Z-ent
+            version_pattern = r'lsws-(\d+\.\d+\.\d+)-ent'
+            versions = re.findall(version_pattern, html)
+
+            if versions:
+                # Get the latest version
+                latest_version = sorted(versions, key=lambda v: [int(x) for x in v.split('.')])[-1]
+                InstallCyberPanel.stdOut(f"Found latest LSWS Enterprise version: {latest_version}", 1)
+                return latest_version
+            else:
+                InstallCyberPanel.stdOut("Could not find version pattern in HTML, using fallback", 1)
+
+        except Exception as e:
+            InstallCyberPanel.stdOut(f"Failed to fetch latest LSWS version: {str(e)}, using fallback", 1)
+
+        # Fallback to known latest version
+        return "6.3.4"
+
     def installLiteSpeed(self):
         if self.ent == 0:
             self.install_package('openlitespeed')
@@ -190,34 +220,37 @@ class InstallCyberPanel:
                 except:
                     pass
 
+                # Get the latest LSWS Enterprise version dynamically
+                lsws_version = InstallCyberPanel.getLatestLSWSVersion()
+
                 if InstallCyberPanel.ISARM():
-                    command = 'wget https://www.litespeedtech.com/packages/6.0/lsws-6.2-ent-aarch64-linux.tar.gz'
+                    command = f'wget https://www.litespeedtech.com/packages/6.0/lsws-{lsws_version}-ent-aarch64-linux.tar.gz'
                 else:
-                    command = 'wget https://www.litespeedtech.com/packages/6.0/lsws-6.2-ent-x86_64-linux.tar.gz'
+                    command = f'wget https://www.litespeedtech.com/packages/6.0/lsws-{lsws_version}-ent-x86_64-linux.tar.gz'
 
                 install_utils.call(command, self.distro, command, command, 1, 1, os.EX_OSERR)
 
                 if InstallCyberPanel.ISARM():
-                    command = 'tar zxf lsws-6.2-ent-aarch64-linux.tar.gz'
+                    command = f'tar zxf lsws-{lsws_version}-ent-aarch64-linux.tar.gz'
                 else:
-                    command = 'tar zxf lsws-6.2-ent-x86_64-linux.tar.gz'
+                    command = f'tar zxf lsws-{lsws_version}-ent-x86_64-linux.tar.gz'
 
                 install_utils.call(command, self.distro, command, command, 1, 1, os.EX_OSERR)
 
                 if str.lower(self.serial) == 'trial':
-                    command = 'wget -q --output-document=lsws-6.2/trial.key http://license.litespeedtech.com/reseller/trial.key'
+                    command = f'wget -q --output-document=lsws-{lsws_version}/trial.key http://license.litespeedtech.com/reseller/trial.key'
                 if self.serial == '1111-2222-3333-4444':
-                    command = 'wget -q --output-document=/root/cyberpanel/install/lsws-6.2/trial.key http://license.litespeedtech.com/reseller/trial.key'
+                    command = f'wget -q --output-document=/root/cyberpanel/install/lsws-{lsws_version}/trial.key http://license.litespeedtech.com/reseller/trial.key'
                     install_utils.call(command, self.distro, command, command, 1, 1, os.EX_OSERR)
                 else:
-                    writeSerial = open('lsws-6.2/serial.no', 'w')
+                    writeSerial = open(f'lsws-{lsws_version}/serial.no', 'w')
                     writeSerial.writelines(self.serial)
                     writeSerial.close()
 
-                shutil.copy('litespeed/install.sh', 'lsws-6.2/')
-                shutil.copy('litespeed/functions.sh', 'lsws-6.2/')
+                shutil.copy('litespeed/install.sh', f'lsws-{lsws_version}/')
+                shutil.copy('litespeed/functions.sh', f'lsws-{lsws_version}/')
 
-                os.chdir('lsws-6.2')
+                os.chdir(f'lsws-{lsws_version}')
 
                 command = 'chmod +x install.sh'
                 install_utils.call(command, self.distro, command, command, 1, 1, os.EX_OSERR)

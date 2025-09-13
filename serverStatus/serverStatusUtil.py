@@ -17,6 +17,8 @@ from plogical.sslUtilities import sslUtilities
 from plogical.vhost import vhost
 from shutil import ignore_patterns
 import threading as multi
+import urllib.request
+import re
 
 
 class ServerStatusUtil(multi.Thread):
@@ -46,6 +48,37 @@ class ServerStatusUtil(multi.Thread):
             logging.CyberCPLogFileWriter.writeToFile(str(msg))
             return 0
 
+    @staticmethod
+    def getLatestLSWSVersion():
+        """Fetch the latest LSWS Enterprise version from LiteSpeed's website"""
+        try:
+            # Try to fetch from the download page
+            url = "https://www.litespeedtech.com/products/litespeed-web-server/download"
+            req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+            with urllib.request.urlopen(req, timeout=10) as response:
+                html = response.read().decode('utf-8')
+
+            # Look for the latest version pattern: lsws-X.Y.Z-ent
+            version_pattern = r'lsws-(\d+\.\d+\.\d+)-ent'
+            versions = re.findall(version_pattern, html)
+
+            if versions:
+                # Get the latest version
+                latest_version = sorted(versions, key=lambda v: [int(x) for x in v.split('.')])[-1]
+                logging.CyberCPLogFileWriter.statusWriter(ServerStatusUtil.lswsInstallStatusPath,
+                                                          f"Found latest LSWS Enterprise version: {latest_version}\n", 1)
+                return latest_version
+            else:
+                logging.CyberCPLogFileWriter.statusWriter(ServerStatusUtil.lswsInstallStatusPath,
+                                                          "Could not find version pattern in HTML, using fallback\n", 1)
+
+        except Exception as e:
+            logging.CyberCPLogFileWriter.statusWriter(ServerStatusUtil.lswsInstallStatusPath,
+                                                      f"Failed to fetch latest LSWS version: {str(e)}, using fallback\n", 1)
+
+        # Fallback to known latest version
+        return "6.3.4"
+
 
     @staticmethod
     def installLiteSpeed(licenseKey, statusFile):
@@ -73,11 +106,14 @@ class ServerStatusUtil(multi.Thread):
 
             from plogical.acl import ACLManager
 
+            # Get the latest LSWS Enterprise version dynamically
+            lsws_version = ServerStatusUtil.getLatestLSWSVersion()
+
             if ACLManager.ISARM():
-                command = 'wget https://www.litespeedtech.com/packages/6.0/lsws-6.2-ent-aarch64-linux.tar.gz'
+                command = f'wget https://www.litespeedtech.com/packages/6.0/lsws-{lsws_version}-ent-aarch64-linux.tar.gz'
             else:
 
-                command = 'wget https://www.litespeedtech.com/packages/6.0/lsws-6.2-ent-x86_64-linux.tar.gz'
+                command = f'wget https://www.litespeedtech.com/packages/6.0/lsws-{lsws_version}-ent-x86_64-linux.tar.gz'
 
             if ServerStatusUtil.executioner(command, statusFile) == 0:
                 return 0
@@ -85,30 +121,30 @@ class ServerStatusUtil(multi.Thread):
             if os.path.exists('/usr/local/CyberCP/lsws-6.0/'):
                 shutil.rmtree('/usr/local/CyberCP/lsws-6.0')
 
-            if os.path.exists('/usr/local/CyberCP/lsws-6.2/'):
-                shutil.rmtree('/usr/local/CyberCP/lsws-6.2/')
+            if os.path.exists(f'/usr/local/CyberCP/lsws-{lsws_version}/'):
+                shutil.rmtree(f'/usr/local/CyberCP/lsws-{lsws_version}/')
 
             if ACLManager.ISARM():
-                command = 'tar zxf lsws-6.2-ent-aarch64-linux.tar.gz -C /usr/local/CyberCP'
+                command = f'tar zxf lsws-{lsws_version}-ent-aarch64-linux.tar.gz -C /usr/local/CyberCP'
             else:
-                command = 'tar zxf lsws-6.2-ent-x86_64-linux.tar.gz -C /usr/local/CyberCP'
+                command = f'tar zxf lsws-{lsws_version}-ent-x86_64-linux.tar.gz -C /usr/local/CyberCP'
 
             if ServerStatusUtil.executioner(command, statusFile) == 0:
                 return 0
 
             if licenseKey == 'trial':
-                command = 'wget -q --output-document=/usr/local/CyberCP/lsws-6.2/trial.key http://license.litespeedtech.com/reseller/trial.key'
+                command = f'wget -q --output-document=/usr/local/CyberCP/lsws-{lsws_version}/trial.key http://license.litespeedtech.com/reseller/trial.key'
                 if ServerStatusUtil.executioner(command, statusFile) == 0:
                     return 0
             else:
-                writeSerial = open('/usr/local/CyberCP/lsws-6.2/serial.no', 'w')
+                writeSerial = open(f'/usr/local/CyberCP/lsws-{lsws_version}/serial.no', 'w')
                 writeSerial.writelines(licenseKey)
                 writeSerial.close()
 
-            shutil.copy('/usr/local/CyberCP/serverStatus/litespeed/install.sh', '/usr/local/CyberCP/lsws-6.2/')
-            shutil.copy('/usr/local/CyberCP/serverStatus/litespeed/functions.sh', '/usr/local/CyberCP/lsws-6.2/')
+            shutil.copy('/usr/local/CyberCP/serverStatus/litespeed/install.sh', f'/usr/local/CyberCP/lsws-{lsws_version}/')
+            shutil.copy('/usr/local/CyberCP/serverStatus/litespeed/functions.sh', f'/usr/local/CyberCP/lsws-{lsws_version}/')
 
-            os.chdir('/usr/local/CyberCP/lsws-6.2/')
+            os.chdir(f'/usr/local/CyberCP/lsws-{lsws_version}/')
 
             command = 'chmod +x install.sh'
             if ServerStatusUtil.executioner(command, statusFile) == 0:
@@ -135,7 +171,7 @@ class ServerStatusUtil(multi.Thread):
                 pass
 
             try:
-                os.rmdir("/usr/local/CyberCP/lsws-6.2")
+                os.rmdir(f"/usr/local/CyberCP/lsws-{lsws_version}")
             except:
                 pass
 

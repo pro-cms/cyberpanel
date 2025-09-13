@@ -42,12 +42,12 @@ class installUtilities:
     @staticmethod
     def addLiteSpeedRepo():
         try:
-            cmd = []
-
-            cmd.append("rpm")
-            cmd.append("-ivh")
-            cmd.append("http://rpms.litespeedtech.com/centos/litespeed-repo-1.1-1.el7.noarch.rpm")
-            res = subprocess.call(cmd)
+            # Use the official LiteSpeed repository installation script
+            # This supports all OS versions including CentOS/AlmaLinux/Rocky 7, 8, and 9
+            cmd = "wget -O - https://repo.litespeed.sh | bash"
+            
+            res = subprocess.call(cmd, shell=True)
+            
             if res == 1:
                 print("###############################################")
                 print("         Could not add Litespeed repo         " )
@@ -76,7 +76,7 @@ class installUtilities:
             cmd.append("yum")
             cmd.append("-y")
             cmd.append("install")
-            cmd.append("openlitespeed-1.4.26")
+            cmd.append("openlitespeed")
 
             res = subprocess.call(cmd)
 
@@ -342,7 +342,7 @@ class installUtilities:
             cmd.append("yum")
             cmd.append("-y")
             cmd.append("remove")
-            cmd.append("openlitespeed-1.4.26")
+            cmd.append("openlitespeed")
 
             res = subprocess.call(cmd)
 

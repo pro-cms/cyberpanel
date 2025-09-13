@@ -17,7 +17,7 @@ from django.utils import translation
 # Create your views here.
 
 VERSION = '2.4'
-BUILD = 3
+BUILD = 4
 
 
 def verifyLogin(request):
@@ -32,46 +32,61 @@ def verifyLogin(request):
 
         try:
             if request.method == "POST":
-                data = json.loads(request.body)
+                try:
+                    data = json.loads(request.body)
+                except json.JSONDecodeError as e:
+                    print(f"JSON decode error: {e}")
+                    print(f"Raw request body: {request.body}")
+                    data = {'userID': 0, 'loginStatus': 0, 'error_message': 'Invalid request format'}
+                    json_data = json.dumps(data)
+                    return HttpResponse(json_data)
 
-                username = data['username']
-                password = data['password']
+                username = data.get('username', '')
+                password = data.get('password', '')
+
+                # Debug logging
+                print(f"Login attempt - Username: {username}, Password length: {len(password) if password else 0}")
+                print(f"Password contains '$': {'$' in password if password else False}")
+                print(f"Raw password: {repr(password)}")
 
                 try:
-                    if data['languageSelection'] == "English":
+                    language_selection = data.get('languageSelection', 'english')
+                    if language_selection == "English":
                         user_Language = "en"
-                    elif data['languageSelection'] == "Chinese":
+                    elif language_selection == "Chinese":
                         user_Language = "cn"
-                    elif data['languageSelection'] == "Bulgarian":
+                    elif language_selection == "Bulgarian":
                         user_Language = "br"
-                    elif data['languageSelection'] == "Portuguese":
+                    elif language_selection == "Portuguese":
                         user_Language = "pt"
-                    elif data['languageSelection'] == "Japanese":
+                    elif language_selection == "Japanese":
                         user_Language = "ja"
-                    elif data['languageSelection'] == "Bosnian":
+                    elif language_selection == "Bosnian":
                         user_Language = "bs"
-                    elif data['languageSelection'] == "Greek":
+                    elif language_selection == "Greek":
                         user_Language = "gr"
-                    elif data['languageSelection'] == "Russian":
+                    elif language_selection == "Russian":
                         user_Language = "ru"
-                    elif data['languageSelection'] == "Turkish":
+                    elif language_selection == "Turkish":
                         user_Language = "tr"
-                    elif data['languageSelection'] == "Spanish":
+                    elif language_selection == "Spanish":
                         user_Language = "es"
-                    elif data['languageSelection'] == "French":
+                    elif language_selection == "French":
                         user_Language = "fr"
-                    elif data['languageSelection'] == "Polish":
+                    elif language_selection == "Polish":
                         user_Language = "pl"
-                    elif data['languageSelection'] == "Vietnamese":
+                    elif language_selection == "Vietnamese":
                         user_Language = "vi"
-                    elif data['languageSelection'] == "Italian":
+                    elif language_selection == "Italian":
                         user_Language = "it"
-                    elif data['languageSelection'] == "German":
+                    elif language_selection == "German":
                         user_Language = "de"
-                    elif data['languageSelection'] == "Indonesian":
+                    elif language_selection == "Indonesian":
                         user_Language = "id"
-                    elif data['languageSelection'] == "Bangla":
+                    elif language_selection == "Bangla":
                         user_Language = "bn"
+                    else:
+                        user_Language = 'en'
 
                     translation.activate(user_Language)
                     response = HttpResponse()
@@ -83,6 +98,7 @@ def verifyLogin(request):
                     response.set_cookie(settings.LANGUAGE_COOKIE_NAME, user_Language)
 
             admin = Administrator.objects.get(userName=username)
+            print(f"Found admin user: {admin.userName}, password hash length: {len(admin.password) if admin.password else 0}")
 
             if admin.state == 'SUSPENDED':
                 data = {'userID': 0, 'loginStatus': 0, 'error_message': 'Account currently suspended.'}
@@ -99,7 +115,10 @@ def verifyLogin(request):
                     response.write(json_data)
                     return response
 
-            if hashPassword.check_password(admin.password, password):
+            password_check_result = hashPassword.check_password(admin.password, password)
+            print(f"Password check result: {password_check_result}")
+
+            if password_check_result:
                 if admin.twoFA:
                     if request.session.get('twofa', 1) == 0:
                         import pyotp
@@ -222,7 +241,7 @@ def loadLoginPage(request):
 
             token = hashPassword.generateToken('admin', '1234567')
 
-            email = 'example@example.org'
+            email = 'admin@cyberpanel.net'
             admin = Administrator(userName="admin", password=password, type=1, email=email,
                                   firstName="Cyber", lastName="Panel", acl=acl, token=token)
             admin.save()

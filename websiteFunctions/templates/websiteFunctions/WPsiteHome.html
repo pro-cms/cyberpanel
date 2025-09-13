@@ -8,48 +8,26 @@
     <!-- Current language: {{ LANGUAGE_CODE }} -->
 
     <style>
-        /* Ultra-Modern CyberPanel Design System */
-        /* 
-        Commented out :root block to allow dark mode CSS variables to work properly
+        /* WordPress Page Specific Variables */
         :root {
-            --primary-color: #6366f1;
-            --primary-hover: #5558e3;
-            --primary-light: #eef2ff;
-            --secondary-color: #8b5cf6;
-            --accent-color: #ec4899;
-            --success-color: #10b981;
-            --danger-color: #ef4444;
-            --warning-color: #f59e0b;
-            --info-color: #3b82f6;
-            
-            --bg-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            --bg-gradient-alt: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-            --bg-gradient-dark: linear-gradient(135deg, #2d3561 0%, #c05c7e 100%);
-            
-            --bg-light: #f8fafc;
-            --bg-card: #ffffff;
-            --bg-hover: #f1f5f9;
-            --border-color: #e2e8f0;
-            --border-light: #f1f5f9;
-            
-            --text-primary: #1e293b;
-            --text-secondary: #64748b;
-            --text-muted: #94a3b8;
-            
-            --shadow-sm: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.06);
-            --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
-            --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
-            --shadow-xl: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04);
-            
-            --radius-sm: 6px;
-            --radius-md: 8px;
-            --radius-lg: 12px;
-            --radius-xl: 16px;
-            --radius-full: 9999px;
-            
-            --transition-base: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            /* WordPress-specific gradients */
+            --wp-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 25%, #f093fb 50%, #f5576c 75%, #4facfe 100%);
+            --wp-gradient-alt: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            --wp-radius-xl: 16px;
+            --wp-radius-lg: 12px;
+            --wp-radius-md: 8px;
+            --wp-shadow-card: 0 8px 32px rgba(0, 0, 0, 0.08), 0 2px 8px rgba(0, 0, 0, 0.04);
+            --wp-shadow-hover: 0 20px 40px rgba(0, 0, 0, 0.12), 0 8px 16px rgba(0, 0, 0, 0.08);
         }
-        */
+
+        /* Dark mode specific overrides for WordPress page */
+        [data-theme="dark"] {
+            /* WordPress-specific dark mode gradients */
+            --wp-gradient: linear-gradient(135deg, #7c7ff3 0%, #9b5de5 25%, #ec4899 50%, #f97316 75%, #06b6d4 100%);
+            --wp-gradient-alt: linear-gradient(135deg, #ec4899 0%, #f97316 100%);
+            --wp-shadow-card: 0 8px 32px rgba(0, 0, 0, 0.4), 0 2px 8px rgba(0, 0, 0, 0.3);
+            --wp-shadow-hover: 0 20px 40px rgba(0, 0, 0, 0.5), 0 8px 16px rgba(0, 0, 0, 0.4);
+        }
 
         /* Container Styling */
         .container {
@@ -57,21 +35,37 @@
             margin: 0 auto;
             padding: 20px;
             min-height: 100vh;
-            background: var(--bg-primary, linear-gradient(180deg, #f8fafc 0%, #e2e8f0 100%));
+            background: var(--bg-primary);
+            position: relative;
+        }
+
+        .container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background:
+                radial-gradient(circle at 20% 80%, rgba(88, 86, 214, 0.05) 0%, transparent 50%),
+                radial-gradient(circle at 80% 20%, rgba(124, 127, 243, 0.05) 0%, transparent 50%),
+                radial-gradient(circle at 40% 40%, rgba(16, 185, 129, 0.03) 0%, transparent 50%);
+            pointer-events: none;
         }
 
         /* Page Title Section */
         #page-title {
-            background: var(--bg-gradient);
-            color: var(--text-on-primary, white);
-            padding: 40px;
-            border-radius: var(--radius-xl);
-            margin-bottom: 30px;
-            box-shadow: var(--shadow-xl);
+            background: var(--wp-gradient);
+            color: white;
+            padding: 50px 40px;
+            border-radius: var(--wp-radius-xl);
+            margin-bottom: 40px;
+            box-shadow: 0 20px 40px rgba(102, 126, 234, 0.25);
             position: relative;
             overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.2);
         }
-        
+
         #page-title::before {
             content: '';
             position: absolute;
@@ -79,72 +73,118 @@
             right: -50%;
             width: 200%;
             height: 200%;
-            background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
-            animation: pulse 4s ease-in-out infinite;
+            background:
+                radial-gradient(circle at 30% 70%, rgba(255,255,255,0.15) 0%, transparent 40%),
+                radial-gradient(circle at 70% 30%, rgba(255,255,255,0.1) 0%, transparent 40%);
+            animation: pulse 6s ease-in-out infinite;
         }
-        
+
         @keyframes pulse {
-            0%, 100% { transform: scale(1); opacity: 0.5; }
-            50% { transform: scale(1.1); opacity: 0.3; }
+            0%, 100% {
+                transform: scale(1) rotate(0deg);
+                opacity: 0.6;
+            }
+            33% {
+                transform: scale(1.05) rotate(1deg);
+                opacity: 0.4;
+            }
+            66% {
+                transform: scale(0.98) rotate(-1deg);
+                opacity: 0.5;
+            }
         }
 
         #page-title h2 {
-            font-size: 32px;
-            font-weight: 700;
-            margin-bottom: 10px;
-            letter-spacing: -0.5px;
+            font-size: 36px;
+            font-weight: 800;
+            margin-bottom: 12px;
+            letter-spacing: -0.8px;
             position: relative;
             z-index: 1;
-            background: linear-gradient(to right, #ffffff 0%, #e0e7ff 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
+            color: white;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.1);
         }
 
         #page-title p {
-            font-size: 16px;
+            font-size: 18px;
             opacity: 0.95;
             margin: 0;
             position: relative;
             z-index: 1;
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 12px;
+            font-weight: 500;
+            color: white;
         }
         
         .status-badge {
             display: inline-flex;
             align-items: center;
-            gap: 6px;
-            background: rgba(255, 255, 255, 0.2);
-            padding: 4px 12px;
-            border-radius: var(--radius-full);
-            font-size: 12px;
+            gap: 8px;
+            background: rgba(255, 255, 255, 0.25);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 13px;
             font-weight: 600;
-            backdrop-filter: blur(10px);
+            letter-spacing: 0.4px;
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
         }
-        
+
+        .status-badge:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+        }
+
         .status-badge::before {
             content: '';
-            width: 8px;
-            height: 8px;
-            background: var(--success-color, #10b981);
+            width: 10px;
+            height: 10px;
+            background: var(--success-color);
             border-radius: 50%;
             animation: statusPulse 2s ease-in-out infinite;
+            box-shadow: 0 0 8px rgba(16, 185, 129, 0.4);
         }
-        
+
         @keyframes statusPulse {
-            0%, 100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
-            50% { box-shadow: 0 0 0 8px rgba(16, 185, 129, 0); }
+            0%, 100% {
+                box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.6);
+                transform: scale(1);
+            }
+            50% {
+                box-shadow: 0 0 0 12px rgba(16, 185, 129, 0);
+                transform: scale(1.1);
+            }
         }
 
         /* Main Panel */
         .panel {
-            background: var(--bg-card);
-            border-radius: var(--radius-lg);
-            box-shadow: var(--shadow-sm);
+            background: var(--bg-secondary);
+            border-radius: var(--wp-radius-lg);
+            box-shadow: var(--wp-shadow-card);
             border: 1px solid var(--border-color);
             overflow: hidden;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .panel:hover {
+            box-shadow: var(--wp-shadow-hover);
+            transform: translateY(-2px);
+        }
+
+        .panel::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            background: var(--wp-gradient);
+            border-radius: var(--wp-radius-lg) var(--wp-radius-lg) 0 0;
         }
 
         .panel-body {
@@ -154,23 +194,47 @@
         /* Content Box Header */
         .content-box-header {
             background: var(--bg-light);
-            padding: 20px 30px;
+            padding: 24px 32px;
             margin: 0;
-            font-size: 20px;
-            font-weight: 600;
+            font-size: 22px;
+            font-weight: 700;
             color: var(--text-primary);
             border-bottom: 1px solid var(--border-color);
-            letter-spacing: 0.3px;
+            letter-spacing: 0.4px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .content-box-header::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: var(--wp-gradient);
+            opacity: 0.3;
         }
 
         /* Nav Tabs */
         .nav-tabs {
             background: var(--bg-light);
-            padding: 15px 30px 0;
+            padding: 20px 32px 0;
             border: none;
             display: flex;
-            gap: 10px;
+            gap: 8px;
             flex-wrap: wrap;
+            position: relative;
+        }
+
+        .nav-tabs::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 32px;
+            right: 32px;
+            height: 1px;
+            background: linear-gradient(90deg, rgba(226, 232, 240, 0.5), rgba(148, 163, 184, 0.3), rgba(226, 232, 240, 0.5));
         }
 
         .nav-tabs li {
@@ -180,154 +244,250 @@
         .nav-tabs li a {
             background: transparent;
             border: none;
-            border-radius: var(--radius-md) var(--radius-md) 0 0;
-            padding: 12px 24px;
+            border-radius: var(--wp-radius-md) var(--wp-radius-md) 0 0;
+            padding: 14px 26px;
             color: var(--text-secondary);
-            font-weight: 500;
-            transition: all 0.3s ease;
+            font-weight: 600;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             font-size: 15px;
-            letter-spacing: 0.3px;
+            letter-spacing: 0.4px;
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 10px;
+            position: relative;
+            overflow: hidden;
         }
-        
+
+        .nav-tabs li a::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(255,255,255,0.8), rgba(248,250,252,0.6));
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
         .nav-tabs li a i {
-            font-size: 14px;
+            font-size: 16px;
+            transition: all 0.3s ease;
         }
 
         .nav-tabs li.active a,
         .nav-tabs li a:hover {
-            background: var(--bg-card);
-            color: var(--primary-color);
-            box-shadow: 0 -2px 8px rgba(0,0,0,0.05);
+            background: var(--bg-secondary);
+            color: var(--accent-color);
+            box-shadow: 0 -3px 12px rgba(102, 126, 234, 0.15), 0 2px 8px var(--shadow-light);
+            transform: translateY(-1px);
+        }
+
+        .nav-tabs li.active a::before,
+        .nav-tabs li a:hover::before {
+            opacity: 1;
+        }
+
+        .nav-tabs li.active a i,
+        .nav-tabs li a:hover i {
+            color: var(--accent-color);
+            transform: scale(1.1);
         }
 
         /* Tab Content */
         .tab-content {
-            padding: 30px;
-            background: var(--bg-card);
+            padding: 40px;
+            background: var(--bg-secondary);
             min-height: 400px;
+            position: relative;
+        }
+
+        .tab-content::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background:
+                radial-gradient(circle at 20% 20%, rgba(88, 86, 214, 0.02) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(124, 127, 243, 0.02) 0%, transparent 50%);
+            pointer-events: none;
         }
 
         .tab-pane {
-            animation: fadeIn 0.3s ease;
+            animation: fadeInUp 0.4s ease;
+            position: relative;
+            z-index: 1;
         }
-        
+
         /* Fix spacing for info sections */
         .tab-pane .row {
             background: var(--bg-light);
-            padding: 20px;
-            border-radius: var(--radius-md);
-            margin-bottom: 20px;
+            padding: 24px;
+            border-radius: var(--wp-radius-lg);
+            margin-bottom: 24px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 2px 8px var(--shadow-light);
+            transition: all 0.3s ease;
         }
 
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
+        .tab-pane .row:hover {
+            box-shadow: 0 4px 16px var(--shadow-medium);
+            transform: translateY(-1px);
+        }
+
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
         }
 
         /* Enhanced Action Links */
         .action-card {
-            background: var(--bg-light);
-            border-radius: var(--radius-lg);
-            padding: 24px;
-            margin-bottom: 30px;
-            box-shadow: var(--shadow-sm);
-            transition: all var(--transition-base);
+            background: var(--bg-secondary);
+            border-radius: var(--wp-radius-xl);
+            padding: 32px;
+            margin-bottom: 32px;
+            box-shadow: var(--wp-shadow-card);
+            border: 1px solid var(--border-color);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
         }
-        
+
+        .action-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--wp-gradient);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
         .action-card:hover {
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-md);
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: var(--wp-shadow-hover);
         }
-        
+
+        .action-card:hover::before {
+            opacity: 0.8;
+        }
+
         .action-card-title {
-            font-size: 18px;
-            font-weight: 600;
+            font-size: 20px;
+            font-weight: 700;
             color: var(--text-primary);
-            margin-bottom: 16px;
+            margin-bottom: 20px;
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 12px;
+            letter-spacing: 0.3px;
         }
-        
+
         .action-card-title i {
-            color: var(--primary-color);
+            color: var(--accent-color);
+            font-size: 24px;
+            transition: all 0.3s ease;
+        }
+
+        .action-card:hover .action-card-title i {
+            transform: rotate(360deg) scale(1.1);
+            color: var(--accent-color);
         }
 
         /* Quick Stats Section */
         .quick-stats {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-            gap: 20px;
-            margin-bottom: 30px;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 24px;
+            margin-bottom: 40px;
         }
-        
+
         .stat-card {
-            background: var(--bg-card);
-            border-radius: var(--radius-lg);
-            padding: 25px;
+            background: var(--bg-secondary);
+            border-radius: var(--wp-radius-xl);
+            padding: 32px;
             position: relative;
             overflow: hidden;
-            transition: var(--transition-base);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
             border: 1px solid var(--border-color);
-            box-shadow: var(--shadow-sm);
+            box-shadow: var(--wp-shadow-card);
         }
-        
+
         .stat-card::before {
             content: '';
             position: absolute;
-            top: -50%;
-            right: -30%;
-            width: 150px;
-            height: 150px;
-            background: var(--bg-gradient);
-            opacity: 0.1;
+            top: -30%;
+            right: -20%;
+            width: 120px;
+            height: 120px;
+            background: var(--wp-gradient);
+            opacity: 0.08;
             border-radius: 50%;
-            transition: var(--transition-base);
+            transition: all 0.4s ease;
         }
-        
+
         .stat-card:hover {
-            transform: translateY(-5px);
-            box-shadow: var(--shadow-lg);
-            border-color: var(--primary-color);
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: var(--wp-shadow-hover);
+            border-color: var(--accent-color);
         }
-        
+
         .stat-card:hover::before {
-            transform: scale(1.2);
-            opacity: 0.15;
+            transform: scale(1.3) rotate(10deg);
+            opacity: 0.12;
         }
         
         .stat-icon {
-            width: 50px;
-            height: 50px;
-            background: var(--bg-gradient);
-            border-radius: var(--radius-md);
+            width: 60px;
+            height: 60px;
+            background: var(--wp-gradient);
+            border-radius: var(--wp-radius-lg);
             display: flex;
             align-items: center;
             justify-content: center;
-            margin-bottom: 15px;
-            font-size: 24px;
-            color: var(--text-on-primary, white);
-            box-shadow: var(--shadow-md);
-        }
-        
-        .stat-value {
+            margin-bottom: 20px;
             font-size: 28px;
-            font-weight: 700;
-            color: var(--text-primary);
-            margin: 0 0 5px 0;
-            line-height: 1;
+            color: white;
+            box-shadow: 0 8px 24px rgba(102, 126, 234, 0.3);
+            transition: all 0.3s ease;
         }
-        
+
+        .stat-card:hover .stat-icon {
+            transform: scale(1.1) rotate(5deg);
+            box-shadow: 0 12px 32px rgba(102, 126, 234, 0.4);
+        }
+
+        .stat-value {
+            font-size: 36px;
+            font-weight: 800;
+            color: var(--text-primary);
+            margin: 0 0 8px 0;
+            line-height: 1;
+            background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: -0.5px;
+        }
+
         .stat-label {
-            font-size: 14px;
+            font-size: 15px;
             color: var(--text-secondary);
             margin: 0;
-            font-weight: 500;
+            font-weight: 600;
             text-transform: uppercase;
-            letter-spacing: 0.5px;
+            letter-spacing: 0.8px;
+            opacity: 0.8;
         }
         
         #WPVersion {
@@ -509,23 +669,24 @@
 
         /* Enhanced Buttons */
         .btn {
-            padding: 12px 28px;
-            border-radius: var(--radius-md);
-            font-weight: 600;
-            transition: all var(--transition-base);
+            padding: 14px 32px;
+            border-radius: var(--radius-lg);
+            font-weight: 700;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
             border: none;
-            font-size: 14px;
-            letter-spacing: 0.3px;
+            font-size: 15px;
+            letter-spacing: 0.5px;
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            gap: 10px;
+            gap: 12px;
             position: relative;
             overflow: hidden;
             cursor: pointer;
             text-decoration: none;
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
         }
-        
+
         .btn::before {
             content: '';
             position: absolute;
@@ -534,80 +695,102 @@
             width: 0;
             height: 0;
             border-radius: 50%;
-            background: rgba(255, 255, 255, 0.2);
+            background: rgba(255, 255, 255, 0.25);
             transform: translate(-50%, -50%);
-            transition: width 0.6s, height 0.6s;
+            transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1), height 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 0;
         }
-        
+
         .btn:active::before {
-            width: 300px;
-            height: 300px;
+            width: 400px;
+            height: 400px;
         }
-        
+
         .btn i {
-            font-size: 16px;
-            transition: var(--transition-base);
+            font-size: 18px;
+            transition: all 0.3s ease;
+            position: relative;
+            z-index: 1;
+        }
+
+        .btn span {
+            position: relative;
+            z-index: 1;
         }
 
         .btn-primary {
-            background: var(--bg-gradient);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 25%, #f093fb 50%, #f5576c 75%, #4facfe 100%);
             color: var(--text-on-primary, white);
-            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+            box-shadow: 0 8px 24px rgba(102, 126, 234, 0.4);
+            border: 1px solid rgba(255, 255, 255, 0.2);
         }
 
         .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
+            transform: translateY(-4px) scale(1.05);
+            box-shadow: 0 12px 32px rgba(102, 126, 234, 0.5);
+            background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 25%, #d53f8c 50%, #e53e3e 75%, #3182ce 100%);
             color: var(--text-on-primary, white);
         }
-        
+
         .btn-primary:hover i {
-            transform: rotate(360deg);
+            transform: rotate(360deg) scale(1.2);
         }
 
         .btn-danger {
-            background: var(--danger-color);
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
             color: var(--text-on-primary, white);
+            box-shadow: 0 4px 16px rgba(239, 68, 68, 0.3);
         }
 
         .btn-danger:hover {
-            background: var(--danger-color, #dc2626);
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-md);
+            background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: 0 8px 24px rgba(239, 68, 68, 0.4);
+            color: var(--text-on-primary, white);
         }
 
         .btn-default {
-            background: var(--bg-light);
+            background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
             color: var(--text-primary);
-            border: 1px solid var(--border-color);
+            border: 1px solid rgba(226, 232, 240, 0.8);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
         }
 
         .btn-default:hover {
-            background: var(--bg-primary, white);
-            box-shadow: var(--shadow-sm);
+            background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
             transform: translateY(-2px);
+            border-color: rgba(102, 126, 234, 0.3);
         }
 
         .btn-outline-primary {
             background: transparent;
             color: var(--primary-color);
             border: 2px solid var(--primary-color);
+            box-shadow: 0 2px 8px rgba(102, 126, 234, 0.2);
         }
 
         .btn-outline-primary:hover {
-            background: var(--primary-color);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: var(--text-on-primary, white);
+            border-color: transparent;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.3);
         }
 
         .btn-outline-danger {
             background: transparent;
             color: var(--danger-color);
             border: 2px solid var(--danger-color);
+            box-shadow: 0 2px 8px rgba(239, 68, 68, 0.2);
         }
 
         .btn-outline-danger:hover {
-            background: var(--danger-color);
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
             color: var(--text-on-primary, white);
+            border-color: transparent;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(239, 68, 68, 0.3);
         }
 
         /* Site Settings Section */

@@ -6,6 +6,7 @@ import shlex
 import subprocess
 import socket
 from plogical.processUtilities import ProcessUtilities
+
 try:
     from websiteFunctions.models import ChildDomains, Websites
 except:
@@ -14,18 +15,17 @@ from plogical.acl import ACLManager
 
 
 class sslUtilities:
-
     Server_root = "/usr/local/lsws"
     redisConf = '/usr/local/lsws/conf/dvhost_redis.conf'
-    
+
     @staticmethod
     def parseACMEError(error_output):
         """Parse ACME error output to extract meaningful error messages"""
         if not error_output:
             return "Unknown error occurred"
-        
+
         error_output = str(error_output)
-        
+
         # Common ACME/Let's Encrypt errors
         error_patterns = {
             r"rateLimited": "Rate limit exceeded. Too many certificates issued for this domain. Please wait before retrying.",
@@ -61,7 +61,7 @@ class sslUtilities:
             r"blacklisted": "Domain is blacklisted by the certificate authority.",
             r"PolicyForbids": "Certificate authority policy forbids issuance for this domain."
         }
-        
+
         # Check each pattern
         import re
         for pattern, message in error_patterns.items():
@@ -73,7 +73,7 @@ class sslUtilities:
                         message += f" Detail: {line.split('Detail:')[1].strip()}"
                         break
                 return message
-        
+
         # Try to extract specific error details from acme.sh output
         if "[" in error_output and "]" in error_output:
             # Extract content between brackets which often contains the error
@@ -84,20 +84,20 @@ class sslUtilities:
                 potential_error = bracket_content[-1]
                 if len(potential_error) > 10:  # Make sure it's meaningful
                     return f"SSL issuance failed: {potential_error}"
-        
+
         # Look for lines starting with "Error:" or containing "error:"
         lines = error_output.split('\n')
         for line in lines:
             if line.strip().startswith('Error:') or 'error:' in line.lower():
                 return line.strip()
-        
+
         # If we can't parse a specific error, return a portion of the output
         if len(error_output) > 200:
             # Get the last 200 characters which likely contain the error
             return f"SSL issuance failed: ...{error_output[-200:]}"
-        
+
         return f"SSL issuance failed: {error_output}"
-    
+
     @staticmethod
     def checkDNSRecords(domain):
         """Check if domain has valid DNS records using external DNS query"""
@@ -108,23 +108,25 @@ class sslUtilities:
                 result = subprocess.run(command, shell=True, capture_output=True, text=True)
             except TypeError:
                 # Fallback for Python < 3.7
-                result = subprocess.run(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
-            
+                result = subprocess.run(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                                        universal_newlines=True)
+
             # If there's any output, the domain has A records
             if result.stdout.strip():
                 return True
-            
+
             # Also check AAAA records
             command = f"dig +short {domain} AAAA @8.8.8.8"
             try:
                 result = subprocess.run(command, shell=True, capture_output=True, text=True)
             except TypeError:
                 # Fallback for Python < 3.7
-                result = subprocess.run(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
-            
+                result = subprocess.run(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                                        universal_newlines=True)
+
             if result.stdout.strip():
                 return True
-                
+
             return False
         except:
             # Fallback to socket method if dig fails
@@ -164,7 +166,6 @@ class sslUtilities:
         except BaseException as msg:
             return 0, str(msg)
 
-
     @staticmethod
     def CheckIfSSLNeedsToBeIssued(virtualHostName):
         #### if website already have an SSL, better not issue again - need to check for wild-card
@@ -177,7 +178,6 @@ class sslUtilities:
             if os.path.exists(ProcessUtilities.debugPath):
                 logging.CyberCPLogFileWriter.writeToFile(f'SSL provider for {virtualHostName} is {SSLProvider}.')
 
-
             #### totally seprate check to see if both non-www and www are covered
 
             if SSLProvider == "(STAGING) Let's Encrypt":
@@ -189,7 +189,8 @@ class sslUtilities:
                     if len(domains) > 1:
                         ### need further checks here to see if ssl is valid for less then 15 days etc
                         logging.CyberCPLogFileWriter.writeToFile(
-                            '[CheckIfSSLNeedsToBeIssued] SSL exists for %s and both versions are covered, just need to ensure if SSL is valid for less then 15 days.' % (virtualHostName), 0)
+                            '[CheckIfSSLNeedsToBeIssued] SSL exists for %s and both versions are covered, just need to ensure if SSL is valid for less then 15 days.' % (
+                                virtualHostName), 0)
                         pass
                     else:
                         return sslUtilities.ISSUE_SSL
@@ -202,7 +203,7 @@ class sslUtilities:
             now = datetime.now()
             diff = finalDate - now
 
-            if int(diff.days) >= 15 and SSLProvider!='Denial':
+            if int(diff.days) >= 15 and SSLProvider != 'Denial':
                 logging.CyberCPLogFileWriter.writeToFile(
                     '[CheckIfSSLNeedsToBeIssued] SSL exists for %s and is not ready to fetch new SSL., skipping..' % (
                         virtualHostName), 0)
@@ -260,8 +261,7 @@ class sslUtilities:
             logging.CyberCPLogFileWriter.writeToFile(str(msg) + " [IO Error with main config file [checkSSLListener]]")
             return str(msg)
         return 0
-    
- 
+
     @staticmethod
     def checkSSLIPv6Listener():
         try:
@@ -271,7 +271,8 @@ class sslUtilities:
                     return 1
 
         except BaseException as msg:
-            logging.CyberCPLogFileWriter.writeToFile(str(msg) + " [IO Error with main config file [checkSSLIPv6Listener]]")
+            logging.CyberCPLogFileWriter.writeToFile(
+                str(msg) + " [IO Error with main config file [checkSSLIPv6Listener]]")
             return str(msg)
         return 0
 
@@ -290,14 +291,14 @@ class sslUtilities:
     @staticmethod
     def PatchVhostConf(virtualHostName):
         """Patch the virtual host configuration to add ACME challenge support
-        
+
         This function adds the necessary configuration to handle ACME challenges
         for both OpenLiteSpeed (OLS) and Apache configurations. It also checks
         for potential configuration conflicts before making changes.
-        
+
         Args:
             virtualHostName (str): The domain name to configure
-            
+
         Returns:
             tuple: (status, message) where status is 1 for success, 0 for failure
         """
@@ -305,12 +306,12 @@ class sslUtilities:
             # Construct paths
             confPath = os.path.join(sslUtilities.Server_root, "conf", "vhosts", virtualHostName)
             completePathToConfigFile = os.path.join(confPath, "vhost.conf")
-            
+
             # Check if file exists
             if not os.path.exists(completePathToConfigFile):
                 logging.CyberCPLogFileWriter.writeToFile(f'Configuration file not found: {completePathToConfigFile}')
                 return 0, f'Configuration file not found: {completePathToConfigFile}'
-            
+
             # Read current configuration
             try:
                 with open(completePathToConfigFile, 'r') as f:
@@ -318,41 +319,42 @@ class sslUtilities:
             except IOError as e:
                 logging.CyberCPLogFileWriter.writeToFile(f'Error reading configuration file: {str(e)}')
                 return 0, f'Error reading configuration file: {str(e)}'
-            
+
             # Check for potential conflicts
             conflicts = []
-            
+
             # Check if ACME challenge is already configured
             if DataVhost.find('/.well-known/acme-challenge') != -1:
                 logging.CyberCPLogFileWriter.writeToFile(f'ACME challenge already configured for {virtualHostName}')
                 return 1, 'ACME challenge already configured'
-            
+
             # Check for conflicting rewrite rules
             if DataVhost.find('rewrite') != -1 and DataVhost.find('enable 1') != -1:
                 conflicts.append('Active rewrite rules found that might interfere with ACME challenges')
-            
+
             # Check for conflicting location blocks
             if DataVhost.find('location /.well-known') != -1:
                 conflicts.append('Existing location block for /.well-known found')
-            
+
             # Check for conflicting aliases
             if DataVhost.find('Alias /.well-known') != -1:
                 conflicts.append('Existing alias for /.well-known found')
-            
+
             # Check for conflicting context blocks
             if DataVhost.find('context /.well-known') != -1:
                 conflicts.append('Existing context block for /.well-known found')
-            
+
             # Check for conflicting access controls
             if DataVhost.find('deny from all') != -1 and DataVhost.find('location') != -1:
                 conflicts.append('Global deny rules found that might block ACME challenges')
-            
+
             # If conflicts found, log them and return
             if conflicts:
                 conflict_message = 'Configuration conflicts found: ' + '; '.join(conflicts)
-                logging.CyberCPLogFileWriter.writeToFile(f'Configuration conflicts for {virtualHostName}: {conflict_message}')
+                logging.CyberCPLogFileWriter.writeToFile(
+                    f'Configuration conflicts for {virtualHostName}: {conflict_message}')
                 return 0, conflict_message
-            
+
             # Create challenge directory if it doesn't exist
             challenge_dir = '/usr/local/lsws/Example/html/.well-known/acme-challenge'
             try:
@@ -362,7 +364,7 @@ class sslUtilities:
             except OSError as e:
                 logging.CyberCPLogFileWriter.writeToFile(f'Error creating challenge directory: {str(e)}')
                 return 0, f'Error creating challenge directory: {str(e)}'
-            
+
             # Handle configuration based on server type
             if ProcessUtilities.decideServer() == ProcessUtilities.OLS:
                 # OpenLiteSpeed configuration
@@ -390,35 +392,37 @@ context /.well-known/acme-challenge {
                     # Read current configuration
                     with open(completePathToConfigFile, 'r') as f:
                         lines = f.readlines()
-                    
+
                     # Write new configuration
                     with open(completePathToConfigFile, 'w') as f:
                         check = 0
                         for line in lines:
                             f.write(line)
                             if line.find('DocumentRoot /home/') > -1 and check == 0:
-                                f.write('    Alias /.well-known/acme-challenge /usr/local/lsws/Example/html/.well-known/acme-challenge\n')
+                                f.write(
+                                    '    Alias /.well-known/acme-challenge /usr/local/lsws/Example/html/.well-known/acme-challenge\n')
                                 check = 1
                 except IOError as e:
                     logging.CyberCPLogFileWriter.writeToFile(f'Error writing Apache configuration: {str(e)}')
                     return 0, f'Error writing Apache configuration: {str(e)}'
-            
+
             # Restart LiteSpeed
             try:
                 from plogical import installUtilities
                 installUtilities.installUtilities.reStartLiteSpeed()
-                logging.CyberCPLogFileWriter.writeToFile(f'Successfully configured ACME challenge for {virtualHostName}')
+                logging.CyberCPLogFileWriter.writeToFile(
+                    f'Successfully configured ACME challenge for {virtualHostName}')
                 return 1, 'Successfully configured ACME challenge'
             except Exception as e:
                 logging.CyberCPLogFileWriter.writeToFile(f'Error restarting LiteSpeed: {str(e)}')
                 return 0, f'Error restarting LiteSpeed: {str(e)}'
-                
+
         except Exception as e:
             logging.CyberCPLogFileWriter.writeToFile(f'Unexpected error in PatchVhostConf: {str(e)}')
             return 0, f'Unexpected error: {str(e)}'
 
     @staticmethod
-    def installSSLForDomain(virtualHostName, adminEmail='example@example.org'):
+    def installSSLForDomain(virtualHostName, adminEmail='domain@cyberpanel.net'):
 
         try:
             website = Websites.objects.get(domain=virtualHostName)
@@ -461,7 +465,7 @@ context /.well-known/acme-challenge {
                     writeDataToFile.writelines(certFile)
                     writeDataToFile.writelines(certChain)
                     writeDataToFile.writelines(sslProtocol)
-                    writeDataToFile.writelines(enableECDHE) 
+                    writeDataToFile.writelines(enableECDHE)
                     writeDataToFile.writelines(renegProtection)
                     writeDataToFile.writelines(sslSessionCache)
                     writeDataToFile.writelines(enableSpdy)
@@ -500,7 +504,7 @@ context /.well-known/acme-challenge {
                     writeDataToFile.writelines(certFile)
                     writeDataToFile.writelines(certChain)
                     writeDataToFile.writelines(sslProtocol)
-                    writeDataToFile.writelines(enableECDHE) 
+                    writeDataToFile.writelines(enableECDHE)
                     writeDataToFile.writelines(renegProtection)
                     writeDataToFile.writelines(sslSessionCache)
                     writeDataToFile.writelines(enableSpdy)
@@ -674,6 +678,14 @@ context /.well-known/acme-challenge {
         import json
         import socket
 
+        # Replace example.org emails with domain-specific email
+        if adminEmail and ('example.org' in adminEmail or 'example.com' in adminEmail):
+            import re
+            # Remove special characters and create domain-based email
+            clean_domain = re.sub(r'[^a-zA-Z0-9]', '', virtualHostName)
+            adminEmail = f'{clean_domain}@cyberpanel.net'
+            logging.CyberCPLogFileWriter.writeToFile(f'Replacing invalid email with {adminEmail}')
+
         Status = 1
 
         if sslUtilities.CheckIfSSLNeedsToBeIssued(virtualHostName) == sslUtilities.ISSUE_SSL:
@@ -696,23 +708,27 @@ context /.well-known/acme-challenge {
         try:
             # Start with just the main domain
             domains = [virtualHostName]
-            
+
             # Check if www subdomain has DNS records before adding it (skip for hostnames)
             if not isHostname and sslUtilities.checkDNSRecords(f'www.{virtualHostName}'):
                 domains.append(f'www.{virtualHostName}')
-                logging.CyberCPLogFileWriter.writeToFile(f"www.{virtualHostName} has DNS records, including in SSL request")
+                logging.CyberCPLogFileWriter.writeToFile(
+                    f"www.{virtualHostName} has DNS records, including in SSL request")
             elif not isHostname:
-                logging.CyberCPLogFileWriter.writeToFile(f"www.{virtualHostName} has no DNS records, excluding from SSL request")
-            
+                logging.CyberCPLogFileWriter.writeToFile(
+                    f"www.{virtualHostName} has no DNS records, excluding from SSL request")
+
             if aliasDomain:
                 domains.append(aliasDomain)
                 # Check if www.aliasDomain has DNS records
                 if sslUtilities.checkDNSRecords(f'www.{aliasDomain}'):
                     domains.append(f'www.{aliasDomain}')
-                    logging.CyberCPLogFileWriter.writeToFile(f"www.{aliasDomain} has DNS records, including in SSL request")
+                    logging.CyberCPLogFileWriter.writeToFile(
+                        f"www.{aliasDomain} has DNS records, including in SSL request")
                 else:
-                    logging.CyberCPLogFileWriter.writeToFile(f"www.{aliasDomain} has no DNS records, excluding from SSL request")
-            
+                    logging.CyberCPLogFileWriter.writeToFile(
+                        f"www.{aliasDomain} has no DNS records, excluding from SSL request")
+
             # Check if Cloudflare is used
             use_dns = False
             try:
@@ -721,7 +737,7 @@ context /.well-known/acme-challenge {
                     use_dns = True
             except:
                 pass
-            
+
             acme = CustomACME(virtualHostName, adminEmail, staging=False, provider='letsencrypt')
             if acme.issue_certificate(domains, use_dns=use_dns):
                 logging.CyberCPLogFileWriter.writeToFile(
@@ -734,7 +750,7 @@ context /.well-known/acme-challenge {
                 error_details = str(e.__dict__)
             else:
                 error_details = error_msg
-            
+
             logging.CyberCPLogFileWriter.writeToFile(
                 f"Let's Encrypt failed for {virtualHostName}: {error_msg}"
             )
@@ -746,23 +762,27 @@ context /.well-known/acme-challenge {
         try:
             # Start with just the main domain
             domains = [virtualHostName]
-            
+
             # Check if www subdomain has DNS records before adding it (skip for hostnames)
             if not isHostname and sslUtilities.checkDNSRecords(f'www.{virtualHostName}'):
                 domains.append(f'www.{virtualHostName}')
-                logging.CyberCPLogFileWriter.writeToFile(f"www.{virtualHostName} has DNS records, including in SSL request")
+                logging.CyberCPLogFileWriter.writeToFile(
+                    f"www.{virtualHostName} has DNS records, including in SSL request")
             elif not isHostname:
-                logging.CyberCPLogFileWriter.writeToFile(f"www.{virtualHostName} has no DNS records, excluding from SSL request")
-            
+                logging.CyberCPLogFileWriter.writeToFile(
+                    f"www.{virtualHostName} has no DNS records, excluding from SSL request")
+
             if aliasDomain:
                 domains.append(aliasDomain)
                 # Check if www.aliasDomain has DNS records
                 if sslUtilities.checkDNSRecords(f'www.{aliasDomain}'):
                     domains.append(f'www.{aliasDomain}')
-                    logging.CyberCPLogFileWriter.writeToFile(f"www.{aliasDomain} has DNS records, including in SSL request")
+                    logging.CyberCPLogFileWriter.writeToFile(
+                        f"www.{aliasDomain} has DNS records, including in SSL request")
                 else:
-                    logging.CyberCPLogFileWriter.writeToFile(f"www.{aliasDomain} has no DNS records, excluding from SSL request")
-            
+                    logging.CyberCPLogFileWriter.writeToFile(
+                        f"www.{aliasDomain} has no DNS records, excluding from SSL request")
+
             acme = CustomACME(virtualHostName, adminEmail, staging=False, provider='zerossl')
             if acme.issue_certificate(domains, use_dns=use_dns):
                 logging.CyberCPLogFileWriter.writeToFile(
@@ -790,37 +810,41 @@ context /.well-known/acme-challenge {
                 try:
                     # Build domain list for acme.sh
                     domain_list = " -d " + virtualHostName
-                    
+
                     # Check if www subdomain has DNS records (skip for hostnames)
                     if not isHostname and sslUtilities.checkDNSRecords(f'www.{virtualHostName}'):
                         domain_list += " -d www." + virtualHostName
-                        logging.CyberCPLogFileWriter.writeToFile(f"www.{virtualHostName} has DNS records, including in acme.sh SSL request")
+                        logging.CyberCPLogFileWriter.writeToFile(
+                            f"www.{virtualHostName} has DNS records, including in acme.sh SSL request")
                     elif not isHostname:
-                        logging.CyberCPLogFileWriter.writeToFile(f"www.{virtualHostName} has no DNS records, excluding from acme.sh SSL request")
-                    
+                        logging.CyberCPLogFileWriter.writeToFile(
+                            f"www.{virtualHostName} has no DNS records, excluding from acme.sh SSL request")
+
                     command = acmePath + " --issue" + domain_list \
                               + ' --cert-file ' + existingCertPath + '/cert.pem' + ' --key-file ' + existingCertPath + '/privkey.pem' \
                               + ' --fullchain-file ' + existingCertPath + '/fullchain.pem' + ' -w /usr/local/lsws/Example/html -k ec-256 --force --staging' \
                               + ' --webroot-path /usr/local/lsws/Example/html'
-                    
+
                     try:
                         result = subprocess.run(command, capture_output=True, universal_newlines=True, shell=True)
                     except TypeError:
                         # Fallback for Python < 3.7
-                        result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True, shell=True)
+                        result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                                                universal_newlines=True, shell=True)
 
                     if result.returncode == 0:
                         command = acmePath + " --issue" + domain_list \
                                   + ' --cert-file ' + existingCertPath + '/cert.pem' + ' --key-file ' + existingCertPath + '/privkey.pem' \
                                   + ' --fullchain-file ' + existingCertPath + '/fullchain.pem' + ' -w /usr/local/lsws/Example/html -k ec-256 --force --server letsencrypt' \
                                   + ' --webroot-path /usr/local/lsws/Example/html'
-                        
+
                         try:
                             result = subprocess.run(command, capture_output=True, universal_newlines=True, shell=True)
                         except TypeError:
                             # Fallback for Python < 3.7
-                            result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True, shell=True)
-                        
+                            result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                                                    universal_newlines=True, shell=True)
+
                         if result.returncode == 0:
                             logging.CyberCPLogFileWriter.writeToFile(
                                 "Successfully obtained SSL for: " + virtualHostName + " and: www." + virtualHostName, 0)
@@ -840,18 +864,18 @@ context /.well-known/acme-challenge {
                 try:
                     # Build domain list for acme.sh with alias domains
                     domain_list = " -d " + virtualHostName
-                    
+
                     # Check if www subdomain has DNS records
                     if sslUtilities.checkDNSRecords(f'www.{virtualHostName}'):
                         domain_list += " -d www." + virtualHostName
-                    
+
                     # Add alias domain
                     domain_list += " -d " + aliasDomain
-                    
+
                     # Check if www.aliasDomain has DNS records
                     if sslUtilities.checkDNSRecords(f'www.{aliasDomain}'):
                         domain_list += " -d www." + aliasDomain
-                    
+
                     command = acmePath + " --issue" + domain_list \
                               + ' --cert-file ' + existingCertPath + '/cert.pem' + ' --key-file ' + existingCertPath + '/privkey.pem' \
                               + ' --fullchain-file ' + existingCertPath + '/fullchain.pem' + ' -w /usr/local/lsws/Example/html -k ec-256 --force --server letsencrypt'
@@ -860,8 +884,9 @@ context /.well-known/acme-challenge {
                         result = subprocess.run(command, capture_output=True, universal_newlines=True, shell=True)
                     except TypeError:
                         # Fallback for Python < 3.7
-                        result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True, shell=True)
-                    
+                        result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                                                universal_newlines=True, shell=True)
+
                     if result.returncode == 0:
                         return 1
                     return 0
@@ -893,35 +918,37 @@ def issueSSLForDomain(domain, adminEmail, sslpath, aliasDomain=None, isHostname=
                 logging.CyberCPLogFileWriter.writeToFile(f"Certificate for {domain} expires in {diff.days} days")
             except Exception as e:
                 logging.CyberCPLogFileWriter.writeToFile(f"Could not check certificate expiry: {str(e)}")
-            
+
             logging.CyberCPLogFileWriter.writeToFile(f"Certificate exists for {domain}, attempting renewal...")
-            
+
             # Try to renew using acme.sh
             acmePath = '/root/.acme.sh/acme.sh'
             if os.path.exists(acmePath):
                 # First set the webroot path for the domain
                 command = f'{acmePath} --update-account --accountemail {adminEmail}'
                 subprocess.call(command, shell=True)
-                
+
                 # Build domain list for renewal
                 renewal_domains = f'-d {domain}'
                 if not isHostname and sslUtilities.checkDNSRecords(f'www.{domain}'):
                     renewal_domains += f' -d www.{domain}'
-                
+
                 # For expired certificates, use --issue --force instead of --renew
                 if is_expired:
-                    logging.CyberCPLogFileWriter.writeToFile(f"Certificate is expired, using --issue --force for {domain}")
+                    logging.CyberCPLogFileWriter.writeToFile(
+                        f"Certificate is expired, using --issue --force for {domain}")
                     command = f'{acmePath} --issue {renewal_domains} --webroot /usr/local/lsws/Example/html --force'
                 else:
                     # Try to renew with explicit webroot
                     command = f'{acmePath} --renew {renewal_domains} --webroot /usr/local/lsws/Example/html --force'
-                
+
                 try:
                     result = subprocess.run(command, capture_output=True, text=True, shell=True)
                 except TypeError:
                     # Fallback for Python < 3.7
-                    result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True, shell=True)
-                
+                    result = subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                                            universal_newlines=True, shell=True)
+
                 if result.returncode == 0:
                     logging.CyberCPLogFileWriter.writeToFile(f"Successfully renewed SSL for {domain}")
                     if sslUtilities.installSSLForDomain(domain, adminEmail) == 1:
@@ -932,7 +959,7 @@ def issueSSLForDomain(domain, adminEmail, sslpath, aliasDomain=None, isHostname=
                     error_details = sslUtilities.parseACMEError(error_output)
                     logging.CyberCPLogFileWriter.writeToFile(f"Renewal failed for {domain}. Error: {error_details}")
                     logging.CyberCPLogFileWriter.writeToFile(f"Full error output: {error_output}")
-        
+
         if sslUtilities.obtainSSLForADomain(domain, adminEmail, sslpath, aliasDomain, isHostname) == 1:
             if sslUtilities.installSSLForDomain(domain, adminEmail) == 1:
                 return [1, "None"]
@@ -948,13 +975,16 @@ def issueSSLForDomain(domain, adminEmail, sslpath, aliasDomain=None, isHostname=
 
             if os.path.exists(pathToStoreSSLFullChain):
                 import OpenSSL
-                x509 = OpenSSL.crypto.load_certificate(OpenSSL.crypto.FILETYPE_PEM, open(pathToStoreSSLFullChain, 'r').read())
+                x509 = OpenSSL.crypto.load_certificate(OpenSSL.crypto.FILETYPE_PEM,
+                                                       open(pathToStoreSSLFullChain, 'r').read())
                 SSLProvider = x509.get_issuer().get_components()[1][1].decode('utf-8')
 
                 if SSLProvider != 'Denial':
                     if sslUtilities.installSSLForDomain(domain) == 1:
-                        logging.CyberCPLogFileWriter.writeToFile("We are not able to get new SSL for " + domain + ". But there is an existing SSL, it might only be for the main domain (excluding www).")
-                        return [1, "We are not able to get new SSL for " + domain + ". But there is an existing SSL, it might only be for the main domain (excluding www)." + " [issueSSLForDomain]"]
+                        logging.CyberCPLogFileWriter.writeToFile(
+                            "We are not able to get new SSL for " + domain + ". But there is an existing SSL, it might only be for the main domain (excluding www).")
+                        return [1,
+                                "We are not able to get new SSL for " + domain + ". But there is an existing SSL, it might only be for the main domain (excluding www)." + " [issueSSLForDomain]"]
 
             command = 'openssl req -newkey rsa:2048 -new -nodes -x509 -days 3650 -subj "/C=US/ST=Denial/L=Springfield/O=Dis/CN=' + domain + '" -keyout ' + pathToStoreSSLPrivKey + ' -out ' + pathToStoreSSLFullChain
             cmd = shlex.split(command)

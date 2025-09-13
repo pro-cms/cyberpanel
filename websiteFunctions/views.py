@@ -9,7 +9,6 @@ import json
 import plogical.CyberCPLogFileWriter as logging
 from plogical.acl import ACLManager
 
-
 from plogical.httpProc import httpProc
 from websiteFunctions.models import wpplugins
 from websiteFunctions.website import WebsiteManager
@@ -26,12 +25,14 @@ from plogical.processUtilities import ProcessUtilities
 import os
 import re
 
+
 def loadWebsitesHome(request):
     val = request.session['userID']
     admin = Administrator.objects.get(pk=val)
     proc = httpProc(request, 'websiteFunctions/index.html',
                     {"type": admin.type})
     return proc.render()
+
 
 def createWebsite(request):
     try:
@@ -40,13 +41,16 @@ def createWebsite(request):
         return wm.createWebsite(request, userID)
     except KeyError:
         return redirect(loadLoginPage)
+
+
 def WPCreate(request):
     try:
         userID = request.session['userID']
         wm = WebsiteManager()
-        return wm.WPCreate(request, userID,)
+        return wm.WPCreate(request, userID, )
     except KeyError:
         return redirect(loadLoginPage)
+
 
 def ListWPSites(request):
     try:
@@ -56,6 +60,7 @@ def ListWPSites(request):
         return wm.ListWPSites(request, userID, DeleteID)
     except KeyError:
         return redirect(loadLoginPage)
+
 
 def WPHome(request):
     try:
@@ -67,6 +72,8 @@ def WPHome(request):
         return wm.WPHome(request, userID, WPid, DeleteID)
     except KeyError:
         return redirect(loadLoginPage)
+
+
 def RestoreHome(request):
     try:
         userID = request.session['userID']
@@ -88,6 +95,7 @@ def RemoteBackupConfig(request):
     except KeyError:
         return redirect(loadLoginPage)
 
+
 def BackupfileConfig(request):
     try:
         userID = request.session['userID']
@@ -99,6 +107,7 @@ def BackupfileConfig(request):
     except KeyError:
         return redirect(loadLoginPage)
 
+
 def AddRemoteBackupsite(request):
     try:
         userID = request.session['userID']
@@ -106,17 +115,19 @@ def AddRemoteBackupsite(request):
         ID = request.GET.get('ID')
         DeleteSiteID = request.GET.get('DeleteID')
         wm = WebsiteManager()
-        return wm.AddRemoteBackupsite(request, userID, ID,DeleteSiteID )
+        return wm.AddRemoteBackupsite(request, userID, ID, DeleteSiteID)
     except KeyError:
         return redirect(loadLoginPage)
+
 
 def WordpressPricing(request):
     try:
         userID = request.session['userID']
         wm = WebsiteManager()
-        return wm.WordpressPricing(request, userID,)
+        return wm.WordpressPricing(request, userID, )
     except KeyError:
         return redirect(loadLoginPage)
+
 
 def RestoreBackups(request):
     try:
@@ -128,6 +139,7 @@ def RestoreBackups(request):
     except KeyError:
         return redirect(loadLoginPage)
 
+
 def AutoLogin(request):
     try:
         userID = request.session['userID']
@@ -136,6 +148,8 @@ def AutoLogin(request):
 
     except KeyError:
         return redirect(loadLoginPage)
+
+
 def ConfigurePlugins(request):
     try:
         userID = request.session['userID']
@@ -147,12 +161,13 @@ def ConfigurePlugins(request):
                 jobobj.delete()
                 Deleted = 1
             except BaseException as msg:
-                logging.CyberCPLogFileWriter.writeToFile("DeleteFileID ....... %s....msg.....%s" % (DeleteFileID,msg))
+                logging.CyberCPLogFileWriter.writeToFile("DeleteFileID ....... %s....msg.....%s" % (DeleteFileID, msg))
                 Deleted = 0
         wm = WebsiteManager()
         return wm.ConfigurePlugins(request, userID)
     except KeyError:
         return redirect(loadLoginPage)
+
 
 def Addnewplugin(request):
     try:
@@ -163,15 +178,13 @@ def Addnewplugin(request):
         return redirect(loadLoginPage)
 
 
-
-
 def SearchOnkeyupPlugin(request):
     try:
         userID = request.session['userID']
 
         result = pluginManager.preWebsiteCreation(request)
 
-        if  result != 200:
+        if result != 200:
             return result
 
         wm = WebsiteManager()
@@ -193,7 +206,7 @@ def AddNewpluginAjax(request):
 
         result = pluginManager.preWebsiteCreation(request)
 
-        if  result != 200:
+        if result != 200:
             return result
 
         wm = WebsiteManager()
@@ -226,7 +239,7 @@ def deletesPlgin(request):
 
         result = pluginManager.preWebsiteCreation(request)
 
-        if  result != 200:
+        if result != 200:
             return result
 
         wm = WebsiteManager()
@@ -248,7 +261,7 @@ def Addplugineidt(request):
 
         result = pluginManager.preWebsiteCreation(request)
 
-        if  result != 200:
+        if result != 200:
             return result
 
         wm = WebsiteManager()
@@ -270,7 +283,7 @@ def submitWorpressCreation(request):
 
         result = pluginManager.preWebsiteCreation(request)
 
-        if  result != 200:
+        if result != 200:
             return result
 
         wm = WebsiteManager()
@@ -292,7 +305,7 @@ def FetchWPdata(request):
 
         result = pluginManager.preWebsiteCreation(request)
 
-        if  result != 200:
+        if result != 200:
             return result
 
         wm = WebsiteManager()
@@ -314,7 +327,7 @@ def GetCurrentPlugins(request):
 
         result = pluginManager.preWebsiteCreation(request)
 
-        if  result != 200:
+        if result != 200:
             return result
 
         wm = WebsiteManager()
@@ -337,7 +350,7 @@ def fetchstaging(request):
 
         result = pluginManager.preWebsiteCreation(request)
 
-        if  result != 200:
+        if result != 200:
             return result
 
         wm = WebsiteManager()
@@ -352,13 +365,14 @@ def fetchstaging(request):
     except KeyError:
         return redirect(loadLoginPage)
 
+
 def fetchDatabase(request):
     try:
         userID = request.session['userID']
 
         result = pluginManager.preWebsiteCreation(request)
 
-        if  result != 200:
+        if result != 200:
             return result
 
         wm = WebsiteManager()
@@ -372,6 +386,7 @@ def fetchDatabase(request):
 
     except KeyError:
         return redirect(loadLoginPage)
+
 
 def SaveUpdateConfig(request):
     try:
@@ -394,26 +409,28 @@ def SaveUpdateConfig(request):
     except KeyError:
         return redirect(loadLoginPage)
 
+
 def DeploytoProduction(request):
     try:
         userID = request.session['userID']
 
-        #result = pluginManager.preWebsiteCreation(request)
+        # result = pluginManager.preWebsiteCreation(request)
 
-        #if result != 200:
+        # if result != 200:
         #    return result
 
         wm = WebsiteManager()
         return wm.DeploytoProduction(userID, json.loads(request.body))
 
-        #result = pluginManager.postWebsiteCreation(request, coreResult)
-        #if result != 200:
+        # result = pluginManager.postWebsiteCreation(request, coreResult)
+        # if result != 200:
         #    return result
 
-        #return coreResult
+        # return coreResult
 
     except KeyError:
         return redirect(loadLoginPage)
+
 
 def WPCreateBackup(request):
     try:
@@ -435,7 +452,6 @@ def WPCreateBackup(request):
 
     except KeyError:
         return redirect(loadLoginPage)
-
 
 
 def RestoreWPbackupNow(request):
@@ -480,6 +496,7 @@ def SaveBackupConfig(request):
     except KeyError:
         return redirect(loadLoginPage)
 
+
 def SaveBackupSchedule(request):
     try:
         userID = request.session['userID']
@@ -499,6 +516,7 @@ def SaveBackupSchedule(request):
 
     except KeyError:
         return redirect(loadLoginPage)
+
 
 def AddWPsiteforRemoteBackup(request):
     try:
@@ -607,14 +625,13 @@ def dataintegrity(request):
         return redirect(loadLoginPage)
 
 
-
 def GetCurrentThemes(request):
     try:
         userID = request.session['userID']
 
         result = pluginManager.preWebsiteCreation(request)
 
-        if  result != 200:
+        if result != 200:
             return result
 
         wm = WebsiteManager()
@@ -634,7 +651,7 @@ def UpdateWPSettings(request):
     try:
         userID = request.session['userID']
         data = json.loads(request.body)
-        
+
         wm = WebsiteManager()
         return wm.UpdateWPSettings(userID, data)
     except KeyError:
@@ -647,7 +664,7 @@ def UpdatePlugins(request):
 
         result = pluginManager.preWebsiteCreation(request)
 
-        if  result != 200:
+        if result != 200:
             return result
 
         wm = WebsiteManager()
@@ -669,7 +686,7 @@ def UpdateThemes(request):
 
         result = pluginManager.preWebsiteCreation(request)
 
-        if  result != 200:
+        if result != 200:
             return result
 
         wm = WebsiteManager()
@@ -691,7 +708,7 @@ def DeletePlugins(request):
 
         result = pluginManager.preWebsiteCreation(request)
 
-        if  result != 200:
+        if result != 200:
             return result
 
         wm = WebsiteManager()
@@ -713,7 +730,7 @@ def DeleteThemes(request):
 
         result = pluginManager.preWebsiteCreation(request)
 
-        if  result != 200:
+        if result != 200:
             return result
 
         wm = WebsiteManager()
@@ -735,7 +752,7 @@ def ChangeStatus(request):
 
         result = pluginManager.preWebsiteCreation(request)
 
-        if  result != 200:
+        if result != 200:
             return result
 
         wm = WebsiteManager()
@@ -795,7 +812,6 @@ def CreateStagingNow(request):
         return redirect(loadLoginPage)
 
 
-
 def modifyWebsite(request):
     try:
         userID = request.session['userID']
@@ -807,6 +823,7 @@ def modifyWebsite(request):
     except KeyError:
         return redirect(loadLoginPage)
 
+
 def deleteWebsite(request):
     try:
         userID = request.session['userID']
@@ -814,6 +831,7 @@ def deleteWebsite(request):
         return wm.deleteWebsite(request, userID)
     except KeyError:
         return redirect(loadLoginPage)
+
 
 def CreateNewDomain(request):
     try:
@@ -823,6 +841,7 @@ def CreateNewDomain(request):
     except KeyError:
         return redirect(loadLoginPage)
 
+
 def siteState(request):
     try:
         userID = request.session['userID']
@@ -830,6 +849,7 @@ def siteState(request):
         return wm.siteState(request, userID)
     except KeyError:
         return redirect(loadLoginPage)
+
 
 def listWebsites(request):
     try:
@@ -839,6 +859,7 @@ def listWebsites(request):
     except KeyError:
         return redirect(loadLoginPage)
 
+
 def listChildDomains(request):
     try:
         userID = request.session['userID']
@@ -847,13 +868,14 @@ def listChildDomains(request):
     except KeyError:
         return redirect(loadLoginPage)
 
+
 def submitWebsiteCreation(request):
     try:
         userID = request.session['userID']
 
         result = pluginManager.preWebsiteCreation(request)
 
-        if  result != 200:
+        if result != 200:
             return result
 
         wm = WebsiteManager()
@@ -867,6 +889,7 @@ def submitWebsiteCreation(request):
 
     except KeyError:
         return redirect(loadLoginPage)
+
 
 def submitDomainCreation(request):
     try:
@@ -887,6 +910,7 @@ def submitDomainCreation(request):
     except KeyError:
         return redirect(loadLoginPage)
 
+
 def fetchDomains(request):
     try:
         userID = request.session['userID']
@@ -894,6 +918,7 @@ def fetchDomains(request):
         return wm.fetchDomains(userID, json.loads(request.body))
     except KeyError:
         return redirect(loadLoginPage)
+
 
 def searchWebsites(request):
     try:
@@ -903,6 +928,7 @@ def searchWebsites(request):
     except KeyError:
         return redirect(loadLoginPage)
 
+
 def searchChilds(request):
     try:
         userID = request.session['userID']
@@ -910,6 +936,7 @@ def searchChilds(request):
         return wm.searchChilds(userID, json.loads(request.body))
     except KeyError:
         return redirect(loadLoginPage)
+
 
 def getFurtherAccounts(request):
     try:
@@ -919,6 +946,7 @@ def getFurtherAccounts(request):
     except KeyError:
         return redirect(loadLoginPage)
 
+
 def fetchWebsitesList(request):
     try:
         userID = request.session['userID']
@@ -927,6 +955,7 @@ def fetchWebsitesList(request):
     except KeyError:
         return redirect(loadLoginPage)
 
+
 def fetchChildDomainsMain(request):
     try:
         userID = request.session['userID']
@@ -934,6 +963,7 @@ def fetchChildDomainsMain(request):
         return wm.fetchChildDomainsMain(userID, json.loads(request.body))
     except KeyError:
         return redirect(loadLoginPage)
+
 
 def submitWebsiteDeletion(request):
     try:
@@ -953,6 +983,7 @@ def submitWebsiteDeletion(request):
         return coreResult
     except KeyError:
         return redirect(loadLoginPage)
+
 
 def submitDomainDeletion(request):
     try:
@@ -975,6 +1006,7 @@ def submitDomainDeletion(request):
     except KeyError:
         return redirect(loadLoginPage)
 
+
 def convertDomainToSite(request):
     try:
 
@@ -984,6 +1016,7 @@ def convertDomainToSite(request):
 
     except KeyError:
         return redirect(loadLoginPage)
+
 
 def submitWebsiteStatus(request):
     try:
@@ -1006,6 +1039,7 @@ def submitWebsiteStatus(request):
     except KeyError:
         return redirect(loadLoginPage)
 
+
 def submitWebsiteModify(request):
     try:
 
@@ -1015,6 +1049,7 @@ def submitWebsiteModify(request):
 
     except KeyError:
         return redirect(loadLoginPage)
+
 
 def saveWebsiteChanges(request):
     try:
@@ -1036,6 +1071,7 @@ def saveWebsiteChanges(request):
 
     except KeyError:
         return redirect(loadLoginPage)
+
 
 def domain(request, domain):
     try:
@@ -1061,6 +1097,7 @@ def domain(request, domain):
     except KeyError:
         return redirect(loadLoginPage)
 
+
 def launchChild(request, domain, childDomain):
     try:
         userID = request.session['userID']
@@ -1068,6 +1105,7 @@ def launchChild(request, domain, childDomain):
         return wm.launchChild(request, userID)
     except KeyError:
         return redirect(loadLoginPage)
+
 
 def getDataFromLogFile(request):
     try:
@@ -1077,6 +1115,7 @@ def getDataFromLogFile(request):
     except KeyError:
         return redirect(loadLoginPage)
 
+
 def fetchErrorLogs(request):
     try:
         userID = request.session['userID']
@@ -1085,6 +1124,7 @@ def fetchErrorLogs(request):
     except KeyError:
         return redirect(loadLoginPage)
 
+
 def getDataFromConfigFile(request):
     try:
         userID = request.session['userID']
@@ -1092,6 +1132,7 @@ def getDataFromConfigFile(request):
         return wm.getDataFromConfigFile(userID, json.loads(request.body))
     except KeyError:
         return redirect(loadLoginPage)
+
 
 def saveConfigsToFile(request):
     try:
@@ -1114,6 +1155,7 @@ def saveConfigsToFile(request):
     except KeyError:
         return redirect(loadLoginPage)
 
+
 def getRewriteRules(request):
     try:
         userID = request.session['userID']
@@ -1121,6 +1163,7 @@ def getRewriteRules(request):
         return wm.getRewriteRules(userID, json.loads(request.body))
     except KeyError:
         return redirect(loadLoginPage)
+
 
 def saveRewriteRules(request):
     try:
@@ -1143,6 +1186,7 @@ def saveRewriteRules(request):
     except KeyError:
         return redirect(loadLoginPage)
 
+
 def saveSSL(request):
     try:
 
@@ -1163,6 +1207,7 @@ def saveSSL(request):
 
     except KeyError:
         return redirect(loadLoginPage)
+
 
 def changePHP(request):
     try:
@@ -1185,6 +1230,7 @@ def changePHP(request):
     except KeyError:
         return redirect(loadLoginPage)
 
+
 def listCron(request):
     try:
         userID = request.session['userID']
@@ -1192,6 +1238,7 @@ def listCron(request):
         return wm.listCron(request, userID)
     except KeyError:
         return redirect(loadLoginPage)
+
 
 def getWebsiteCron(request):
     try:
@@ -1201,6 +1248,7 @@ def getWebsiteCron(request):
     except KeyError:
         return redirect(loadLoginPage)
 
+
 def getCronbyLine(request):
     try:
         userID = request.session['userID']
@@ -1209,6 +1257,7 @@ def getCronbyLine(request):
     except KeyError:
         return redirect(loadLoginPage)
 
+
 def saveCronChanges(request):
     try:
         userID = request.session['userID']
@@ -1216,6 +1265,7 @@ def saveCronChanges(request):
         return wm.saveCronChanges(userID, json.loads(request.body))
     except KeyError:
         return redirect(loadLoginPage)
+
 
 def remCronbyLine(request):
     try:
@@ -1236,6 +1286,7 @@ def remCronbyLine(request):
     except KeyError:
         return redirect(loadLoginPage)
 
+
 def addNewCron(request):
     try:
         userID = request.session['userID']
@@ -1255,6 +1306,7 @@ def addNewCron(request):
     except KeyError:
         return redirect(loadLoginPage)
 
+
 def domainAlias(request, domain):
     try:
         userID = request.session['userID']
@@ -1262,6 +1314,7 @@ def domainAlias(request, domain):
         return wm.domainAlias(request, userID)
     except KeyError:
         return redirect(loadLoginPage)
+
 
 def submitAliasCreation(request):
     try:
@@ -1282,6 +1335,7 @@ def submitAliasCreation(request):
     except KeyError:
         return redirect(loadLoginPage)
 
+
 def issueAliasSSL(request):
     try:
         userID = request.session['userID']
@@ -1289,6 +1343,7 @@ def issueAliasSSL(request):
         return wm.issueAliasSSL(userID, json.loads(request.body))
     except KeyError:
         return redirect(loadLoginPage)
+
 
 def delateAlias(request):
     try:
@@ -1308,6 +1363,7 @@ def delateAlias(request):
         return coreResult
     except KeyError:
         return redirect(loadLoginPage)
+
 
 def changeOpenBasedir(request):
     try:
@@ -1330,6 +1386,7 @@ def changeOpenBasedir(request):
     except KeyError:
         return redirect(loadLoginPage)
 
+
 def wordpressInstall(request, domain):
     try:
         userID = request.session['userID']
@@ -1337,6 +1394,7 @@ def wordpressInstall(request, domain):
         return wm.wordpressInstall(request, userID)
     except KeyError:
         return redirect(loadLoginPage)
+
 
 def installWordpress(request):
     try:
@@ -1346,6 +1404,7 @@ def installWordpress(request):
     except KeyError:
         return redirect(loadLoginPage)
 
+
 def installWordpressStatus(request):
     try:
         userID = request.session['userID']
@@ -1353,6 +1412,7 @@ def installWordpressStatus(request):
         return wm.installWordpressStatus(userID, json.loads(request.body))
     except KeyError:
         return redirect(loadLoginPage)
+
 
 def joomlaInstall(request, domain):
     try:
@@ -1362,6 +1422,7 @@ def joomlaInstall(request, domain):
     except KeyError:
         return redirect(loadLoginPage)
 
+
 def installJoomla(request):
     try:
         userID = request.session['userID']
@@ -1369,6 +1430,7 @@ def installJoomla(request):
         return wm.installJoomla(userID, json.loads(request.body))
     except KeyError:
         return redirect(loadLoginPage)
+
 
 def setupGit(request, domain):
     try:
@@ -1378,6 +1440,7 @@ def setupGit(request, domain):
     except KeyError:
         return redirect(loadLoginPage)
 
+
 def setupGitRepo(request):
     try:
         userID = request.session['userID']
@@ -1385,6 +1448,7 @@ def setupGitRepo(request):
         return wm.setupGitRepo(userID, json.loads(request.body))
     except KeyError:
         return redirect(loadLoginPage)
+
 
 @csrf_exempt
 def gitNotify(request, domain):
@@ -1394,6 +1458,7 @@ def gitNotify(request, domain):
     except KeyError:
         return redirect(loadLoginPage)
 
+
 def detachRepo(request):
     try:
         userID = request.session['userID']
@@ -1401,6 +1466,7 @@ def detachRepo(request):
         return wm.detachRepo(userID, json.loads(request.body))
     except KeyError:
         return redirect(loadLoginPage)
+
 
 def changeBranch(request):
     try:
@@ -1410,6 +1476,7 @@ def changeBranch(request):
     except KeyError:
         return redirect(loadLoginPage)
 
+
 def installPrestaShop(request, domain):
     try:
         userID = request.session['userID']
@@ -1417,6 +1484,7 @@ def installPrestaShop(request, domain):
         return wm.installPrestaShop(request, userID)
     except KeyError:
         return redirect(loadLoginPage)
+
 
 def installMagento(request, domain):
     try:
@@ -1426,6 +1494,7 @@ def installMagento(request, domain):
     except KeyError:
         return redirect(loadLoginPage)
 
+
 def magentoInstall(request):
     try:
         userID = request.session['userID']
@@ -1433,6 +1502,7 @@ def magentoInstall(request):
         return wm.magentoInstall(userID, json.loads(request.body))
     except KeyError:
         return redirect(loadLoginPage)
+
 
 def installMautic(request, domain):
     try:
@@ -1442,6 +1512,7 @@ def installMautic(request, domain):
     except KeyError:
         return redirect(loadLoginPage)
 
+
 def mauticInstall(request):
     try:
         userID = request.session['userID']
@@ -1450,6 +1521,7 @@ def mauticInstall(request):
     except KeyError:
         return redirect(loadLoginPage)
 
+
 def prestaShopInstall(request):
     try:
         userID = request.session['userID']
@@ -1457,6 +1529,7 @@ def prestaShopInstall(request):
         return wm.prestaShopInstall(userID, json.loads(request.body))
     except KeyError:
         return redirect(loadLoginPage)
+
 
 def sshAccess(request, domain):
     try:
@@ -1517,6 +1590,7 @@ def sshAccess(request, domain):
     except KeyError:
         return redirect(loadLoginPage)
 
+
 def saveSSHAccessChanges(request):
     try:
         userID = request.session['userID']
@@ -1552,6 +1626,7 @@ def syncToMaster(request, domain, childDomain):
     except KeyError:
         return redirect(loadLoginPage)
 
+
 def startSync(request):
     try:
         userID = request.session['userID']
@@ -1578,6 +1653,7 @@ def manageGIT(request, domain):
     except KeyError:
         return redirect(loadLoginPage)
 
+
 def fetchFolderDetails(request):
     try:
         userID = request.session['userID']
@@ -1585,6 +1661,7 @@ def fetchFolderDetails(request):
         return wm.fetchFolderDetails(userID, json.loads(request.body))
     except KeyError:
         return redirect(loadLoginPage)
+
 
 def initRepo(request):
     try:
@@ -1594,6 +1671,7 @@ def initRepo(request):
     except KeyError:
         return redirect(loadLoginPage)
 
+
 def setupRemote(request):
     try:
         userID = request.session['userID']
@@ -1601,6 +1679,7 @@ def setupRemote(request):
         return wm.setupRemote(userID, json.loads(request.body))
     except KeyError:
         return redirect(loadLoginPage)
+
 
 def changeGitBranch(request):
     try:
@@ -1610,6 +1689,7 @@ def changeGitBranch(request):
     except KeyError:
         return redirect(loadLoginPage)
 
+
 def createNewBranch(request):
     try:
         userID = request.session['userID']
@@ -1617,6 +1697,7 @@ def createNewBranch(request):
         return wm.createNewBranch(userID, json.loads(request.body))
     except KeyError:
         return redirect(loadLoginPage)
+
 
 def commitChanges(request):
     try:
@@ -1626,6 +1707,7 @@ def commitChanges(request):
     except KeyError:
         return redirect(loadLoginPage)
 
+
 def gitPull(request):
     try:
         userID = request.session['userID']
@@ -1633,6 +1715,7 @@ def gitPull(request):
         return wm.gitPull(userID, json.loads(request.body))
     except KeyError:
         return redirect(loadLoginPage)
+
 
 def gitPush(request):
     try:
@@ -1642,6 +1725,7 @@ def gitPush(request):
     except KeyError:
         return redirect(loadLoginPage)
 
+
 def attachRepoGIT(request):
     try:
         userID = request.session['userID']
@@ -1649,6 +1733,7 @@ def attachRepoGIT(request):
         return wm.attachRepoGIT(userID, json.loads(request.body))
     except KeyError:
         return redirect(loadLoginPage)
+
 
 def removeTracking(request):
     try:
@@ -1658,6 +1743,7 @@ def removeTracking(request):
     except KeyError:
         return redirect(loadLoginPage)
 
+
 def fetchGitignore(request):
     try:
         userID = request.session['userID']
@@ -1665,6 +1751,7 @@ def fetchGitignore(request):
         return wm.fetchGitignore(userID, json.loads(request.body))
     except KeyError:
         return redirect(loadLoginPage)
+
 
 def saveGitIgnore(request):
     try:
@@ -1674,6 +1761,7 @@ def saveGitIgnore(request):
     except KeyError:
         return redirect(loadLoginPage)
 
+
 def fetchCommits(request):
     try:
         userID = request.session['userID']
@@ -1681,6 +1769,7 @@ def fetchCommits(request):
         return wm.fetchCommits(userID, json.loads(request.body))
     except KeyError:
         return redirect(loadLoginPage)
+
 
 def fetchFiles(request):
     try:
@@ -1690,6 +1779,7 @@ def fetchFiles(request):
     except KeyError:
         return redirect(loadLoginPage)
 
+
 def fetchChangesInFile(request):
     try:
         userID = request.session['userID']
@@ -1697,6 +1787,7 @@ def fetchChangesInFile(request):
         return wm.fetchChangesInFile(userID, json.loads(request.body))
     except KeyError:
         return redirect(loadLoginPage)
+
 
 def saveGitConfigurations(request):
     try:
@@ -1706,6 +1797,7 @@ def saveGitConfigurations(request):
     except KeyError:
         return redirect(loadLoginPage)
 
+
 def fetchGitLogs(request):
     try:
         userID = request.session['userID']
@@ -1713,6 +1805,7 @@ def fetchGitLogs(request):
         return wm.fetchGitLogs(userID, json.loads(request.body))
     except KeyError:
         return redirect(loadLoginPage)
+
 
 def getSSHConfigs(request):
     try:
@@ -1722,6 +1815,7 @@ def getSSHConfigs(request):
     except KeyError:
         return redirect(loadLoginPage)
 
+
 def deleteSSHKey(request):
     try:
         userID = request.session['userID']
@@ -1730,6 +1824,7 @@ def deleteSSHKey(request):
     except KeyError:
         return redirect(loadLoginPage)
 
+
 def addSSHKey(request):
     try:
         userID = request.session['userID']
@@ -1737,6 +1832,7 @@ def addSSHKey(request):
         return wm.addSSHKey(userID, json.loads(request.body))
     except KeyError:
         return redirect(loadLoginPage)
+
 
 @csrf_exempt
 def webhook(request, domain):
@@ -1764,6 +1860,7 @@ def getSwitchStatus(request):
     except KeyError:
         return redirect(loadLoginPage)
 
+
 def switchServer(request):
     try:
         userID = request.session['userID']
@@ -1771,6 +1868,7 @@ def switchServer(request):
         return wm.switchServer(userID, json.loads(request.body))
     except KeyError:
         return redirect(loadLoginPage)
+
 
 def statusFunc(request):
     try:
@@ -1783,6 +1881,7 @@ def statusFunc(request):
     except KeyError:
         return redirect(loadLoginPage)
 
+
 def tuneSettings(request):
     try:
         userID = request.session['userID']
@@ -1791,6 +1890,7 @@ def tuneSettings(request):
         return wm.tuneSettings(userID, data)
     except KeyError:
         return redirect(loadLoginPage)
+
 
 def saveApacheConfigsToFile(request):
     try:
@@ -1812,6 +1912,7 @@ def CreateDockerPackage(request):
     except BaseException as msg:
         return HttpResponse(msg)
 
+
 def CreateDockerPackage(request):
     try:
         userID = request.session['userID']
@@ -1820,6 +1921,8 @@ def CreateDockerPackage(request):
         return wm.CreateDockerPackage(request, userID, None, DeleteID)
     except KeyError:
         return redirect(loadLoginPage)
+
+
 def AssignPackage(request):
     try:
         userID = request.session['userID']
@@ -1828,6 +1931,8 @@ def AssignPackage(request):
         return wm.AssignPackage(request, userID, None, DeleteID)
     except KeyError:
         return redirect(loadLoginPage)
+
+
 def CreateDockersite(request):
     try:
         userID = request.session['userID']
@@ -1835,6 +1940,7 @@ def CreateDockersite(request):
         return wm.CreateDockersite(request, userID)
     except KeyError:
         return redirect(loadLoginPage)
+
 
 def AddDockerpackage(request):
     try:
@@ -1844,6 +1950,8 @@ def AddDockerpackage(request):
         return wm.AddDockerpackage(userID, data)
     except KeyError:
         return redirect(loadLoginPage)
+
+
 def Getpackage(request):
     try:
         userID = request.session['userID']
@@ -1852,6 +1960,8 @@ def Getpackage(request):
         return wm.Getpackage(userID, data)
     except KeyError:
         return redirect(loadLoginPage)
+
+
 def Updatepackage(request):
     try:
         userID = request.session['userID']
@@ -1860,6 +1970,8 @@ def Updatepackage(request):
         return wm.Updatepackage(userID, data)
     except KeyError:
         return redirect(loadLoginPage)
+
+
 def AddAssignment(request):
     try:
         userID = request.session['userID']
@@ -1868,6 +1980,7 @@ def AddAssignment(request):
         return wm.AddAssignment(userID, data)
     except KeyError:
         return redirect(loadLoginPage)
+
 
 def submitDockerSiteCreation(request):
     try:
@@ -1878,6 +1991,7 @@ def submitDockerSiteCreation(request):
     except KeyError:
         return redirect(loadLoginPage)
 
+
 def ListDockerSites(request):
     try:
         userID = request.session['userID']
@@ -1886,6 +2000,7 @@ def ListDockerSites(request):
         return wm.ListDockerSites(request, userID, None, DeleteID)
     except KeyError:
         return redirect(loadLoginPage)
+
 
 def fetchDockersite(request):
     try:
@@ -1896,6 +2011,7 @@ def fetchDockersite(request):
     except KeyError:
         return redirect(loadLoginPage)
 
+
 def Dockersitehome(request, dockerapp):
     try:
         userID = request.session['userID']
@@ -1903,6 +2019,7 @@ def Dockersitehome(request, dockerapp):
         return wm.Dockersitehome(request, userID, None)
     except KeyError:
         return redirect(loadLoginPage)
+
 
 def fetchWPDetails(request):
     try:
@@ -1915,6 +2032,7 @@ def fetchWPDetails(request):
     except KeyError:
         return redirect(loadLoginPage)
 
+
 @csrf_exempt
 def startContainer(request):
     try:
@@ -1923,6 +2041,7 @@ def startContainer(request):
         return HttpResponse('Not allowed')
     except KeyError:
         return redirect(loadLoginPage)
+
 
 @csrf_exempt
 def stopContainer(request):
@@ -1933,6 +2052,7 @@ def stopContainer(request):
     except KeyError:
         return redirect(loadLoginPage)
 
+
 @csrf_exempt
 def restartContainer(request):
     try:
@@ -1941,6 +2061,7 @@ def restartContainer(request):
         return HttpResponse('Not allowed')
     except KeyError:
         return redirect(loadLoginPage)
+
 
 @csrf_exempt
 def get_website_resources(request):
@@ -1957,7 +2078,7 @@ def get_website_resources(request):
 
         # Verify domain ownership
         currentACL = ACLManager.loadedACL(userID)
-        
+
         from websiteFunctions.models import Websites
         try:
             website = Websites.objects.get(domain=domain)
@@ -1979,6 +2100,7 @@ def get_website_resources(request):
     except BaseException as msg:
         logging.CyberCPLogFileWriter.writeToFile(f'Error in get_website_resources: {str(msg)}')
         return JsonResponse({'status': 0, 'error_message': str(msg)})
+
 
 @csrf_exempt
 def get_terminal_jwt(request):
@@ -2045,6 +2167,7 @@ def get_terminal_jwt(request):
     except Exception as e:
         logger.error(f"Exception in get_terminal_jwt: {str(e)}")
         return JsonResponse({'status': 0, 'error_message': str(e)})
+
 
 def fetchWPBackups(request):
     try:

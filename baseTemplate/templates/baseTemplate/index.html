@@ -1,6 +1,6 @@
 {% load i18n %}
 {% get_current_language as LANGUAGE_CODE %}
-{% with CP_VERSION="2.4.3.1" %}
+{% with CP_VERSION="2.4.4.1" %}
 <!DOCTYPE html>
 <html lang="en" ng-app="CyberCP">
 <head>
@@ -1637,9 +1637,6 @@
                 </a>
                 <a href="{% url 'modSecRulesPacks' %}" class="menu-item">
                     <span>ModSecurity Rules Packs</span>
-                </a>
-                <a href="{% url 'csf' %}" class="menu-item">
-                    <span>CSF</span>
                 </a>
                 <a href="{% url 'imunify' %}" class="menu-item">
                     <span>Imunify 360</span>

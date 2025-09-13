@@ -4,7 +4,7 @@
 #set -x
 #set -u
 
-#CyberPanel installer script for CentOS 7, CentOS 8, CloudLinux 7, AlmaLinux 8, RockyLinux 8, Ubuntu 18.04, Ubuntu 20.04, Ubuntu 20.10, openEuler 20.03 and openEuler 22.03
+#CyberPanel installer script for CentOS 7, CentOS 8, CloudLinux 7, AlmaLinux 8, RockyLinux 8, Ubuntu 18.04, Ubuntu 20.04, Ubuntu 20.10, Ubuntu 22.04, Ubuntu 24.04, openEuler 20.03 and openEuler 22.03
 #For whoever may edit this script, please follow:
 #Please use Pre_Install_xxx() and Post_Install_xxx() if you want to something respectively before or after the panel installation
 #and update below accordingly
@@ -151,14 +151,14 @@ elif grep -q -E "Rocky Linux" /etc/os-release ; then
   Server_OS="RockyLinux"
 elif grep -q -E "AlmaLinux-8|AlmaLinux-9" /etc/os-release ; then
   Server_OS="AlmaLinux"
-elif grep -q -E "Ubuntu 18.04|Ubuntu 20.04|Ubuntu 20.10|Ubuntu 22.04" /etc/os-release ; then
+elif grep -q -E "Ubuntu 18.04|Ubuntu 20.04|Ubuntu 20.10|Ubuntu 22.04|Ubuntu 24.04" /etc/os-release ; then
   Server_OS="Ubuntu"
 elif grep -q -E "openEuler 20.03|openEuler 22.03" /etc/os-release ; then
   Server_OS="openEuler"
 else
   echo -e "Unable to detect your system..."
-  echo -e "\nCyberPanel is supported on x86_64 based Ubuntu 18.04, Ubuntu 20.04, Ubuntu 20.10, Ubuntu 22.04, CentOS 7, CentOS 8, AlmaLinux 8, RockyLinux 8, CloudLinux 7, CloudLinux 8, CloudLinux 9, openEuler 20.03, openEuler 22.03...\n"
-  Debug_Log2 "CyberPanel is supported on x86_64 based Ubuntu 18.04, Ubuntu 20.04, Ubuntu 20.10, Ubuntu 22.04, CentOS 7, CentOS 8, AlmaLinux 8, RockyLinux 8, CloudLinux 7, CloudLinux 8, CloudLinux 9, openEuler 20.03, openEuler 22.03... [404]"
+  echo -e "\nCyberPanel is supported on x86_64 based Ubuntu 18.04, Ubuntu 20.04, Ubuntu 20.10, Ubuntu 22.04, Ubuntu 24.04, CentOS 7, CentOS 8, AlmaLinux 8, RockyLinux 8, CloudLinux 7, CloudLinux 8, CloudLinux 9, openEuler 20.03, openEuler 22.03...\n"
+  Debug_Log2 "CyberPanel is supported on x86_64 based Ubuntu 18.04, Ubuntu 20.04, Ubuntu 20.10, Ubuntu 22.04, Ubuntu 24.04, CentOS 7, CentOS 8, AlmaLinux 8, RockyLinux 8, CloudLinux 7, CloudLinux 8, CloudLinux 9, openEuler 20.03, openEuler 22.03... [404]"
   exit
 fi
 
@@ -303,7 +303,7 @@ Retry_Command() {
 # shellcheck disable=SC2034
 for i in {1..50};
 do
-  $1  && break || echo -e "\n$1 has failed for $i times\nWait for 3 seconds and try again...\n"; sleep 3;
+  eval "$1"  && break || echo -e "\n$1 has failed for $i times\nWait for 3 seconds and try again...\n"; sleep 3;
 done
 }
 
@@ -492,9 +492,13 @@ elif [[ "$Server_OS" = "Ubuntu" ]] ; then
   apt update -y
   export DEBIAN_FRONTEND=noninteractive ; apt-get -o Dpkg::Options::="--force-confold" upgrade -y
 
-  if [[ "$Server_OS_Version" = "22" ]] ; then
-    echo -e "[$(date +"%Y-%m-%d %H:%M:%S")] Installing Ubuntu 22.04 specific packages..." | tee -a /var/log/cyberpanel_upgrade_debug.log
-    # Install Python development packages required for virtualenv on Ubuntu 22.04
+  if [[ "$Server_OS_Version" = "22" ]] || [[ "$Server_OS_Version" = "24" ]] ; then
+    if [[ "$Server_OS_Version" = "24" ]]; then
+      echo -e "[$(date +"%Y-%m-%d %H:%M:%S")] Installing Ubuntu 24.04 specific packages..." | tee -a /var/log/cyberpanel_upgrade_debug.log
+    else
+      echo -e "[$(date +"%Y-%m-%d %H:%M:%S")] Installing Ubuntu 22.04 specific packages..." | tee -a /var/log/cyberpanel_upgrade_debug.log
+    fi
+    # Install Python development packages required for virtualenv on Ubuntu 22.04/24.04
     DEBIAN_FRONTEND=noninteractive apt install -y python3-dev python3-venv python3-pip python3-setuptools python3-wheel
     DEBIAN_FRONTEND=noninteractive apt install -y dnsutils net-tools htop telnet libcurl4-gnutls-dev libgnutls28-dev libgcrypt20-dev libattr1 libattr1-dev liblzma-dev libgpgme-dev libcurl4-gnutls-dev libssl-dev nghttp2 libnghttp2-dev idn2 libidn2-dev libidn2-0-dev librtmp-dev libpsl-dev nettle-dev libgnutls28-dev libldap2-dev libgssapi-krb5-2 libk5crypto3 libkrb5-dev libcomerr2 libldap2-dev virtualenv git socat vim unzip zip libmariadb-dev-compat libmariadb-dev
 
@@ -505,12 +509,18 @@ elif [[ "$Server_OS" = "Ubuntu" ]] ; then
   DEBIAN_FRONTEND=noninteractive apt install -y build-essential libssl-dev libffi-dev python3-dev
   DEBIAN_FRONTEND=noninteractive apt install -y python3-venv
 
-  ### fix for pip issue on ubuntu 22
+  ### fix for pip issue on ubuntu 22 and 24
 
   apt-get remove --purge virtualenv -y
-  pip uninstall -y virtualenv
-  rm -rf /usr/lib/python3/dist-packages/virtualenv*
-  pip3 install --upgrade virtualenv
+  # Handle Ubuntu 24.04's externally-managed-environment policy
+  if [[ "$Server_OS_Version" = "24" ]]; then
+    echo -e "Ubuntu 24.04 detected - using apt for virtualenv installation"
+    DEBIAN_FRONTEND=noninteractive apt-get install -y python3-virtualenv
+  else
+    pip uninstall -y virtualenv 2>/dev/null || true
+    rm -rf /usr/lib/python3/dist-packages/virtualenv*
+    pip3 install --upgrade virtualenv
+  fi
 
 
   if [[ "$Server_OS_Version" = "18" ]] ; then
@@ -552,7 +562,7 @@ Download_Requirement() {
 echo -e "[$(date +"%Y-%m-%d %H:%M:%S")] Starting Download_Requirement function..." | tee -a /var/log/cyberpanel_upgrade_debug.log
 for i in {1..50};
   do
-  if [[ "$Server_OS_Version" = "22" ]] || [[ "$Server_OS_Version" = "9" ]]; then
+  if [[ "$Server_OS_Version" = "22" ]] || [[ "$Server_OS_Version" = "24" ]] || [[ "$Server_OS_Version" = "9" ]]; then
    echo -e "[$(date +"%Y-%m-%d %H:%M:%S")] Downloading requirements.txt for OS version $Server_OS_Version" | tee -a /var/log/cyberpanel_upgrade_debug.log
    wget -O /usr/local/requirments.txt "${Git_Content_URL}/${Branch_Name}/requirments.txt" 2>&1 | tee -a /var/log/cyberpanel_upgrade_debug.log
   else
@@ -575,18 +585,97 @@ done
 
 Pre_Upgrade_Required_Components() {
 
+# Check if CyberCP directory exists but is incomplete/damaged
+echo -e "[$(date +"%Y-%m-%d %H:%M:%S")] Checking CyberCP directory integrity..." | tee -a /var/log/cyberpanel_upgrade_debug.log
+
+# Define essential CyberCP components
+CYBERCP_ESSENTIAL_DIRS=(
+    "/usr/local/CyberCP/CyberCP"
+    "/usr/local/CyberCP/plogical"
+    "/usr/local/CyberCP/websiteFunctions"
+    "/usr/local/CyberCP/manage"
+)
+
+CYBERCP_MISSING=0
+for dir in "${CYBERCP_ESSENTIAL_DIRS[@]}"; do
+    if [ ! -d "$dir" ]; then
+        echo -e "[$(date +"%Y-%m-%d %H:%M:%S")] WARNING: Essential directory missing: $dir" | tee -a /var/log/cyberpanel_upgrade_debug.log
+        CYBERCP_MISSING=1
+    fi
+done
+
+# If essential directories are missing, perform recovery
+if [ $CYBERCP_MISSING -eq 1 ]; then
+    echo -e "[$(date +"%Y-%m-%d %H:%M:%S")] RECOVERY: CyberCP installation appears damaged or incomplete. Initiating recovery..." | tee -a /var/log/cyberpanel_upgrade_debug.log
+    
+    # Backup any remaining configuration files if they exist
+    if [ -f "/usr/local/CyberCP/CyberCP/settings.py" ]; then
+        echo -e "[$(date +"%Y-%m-%d %H:%M:%S")] Backing up existing settings.py..." | tee -a /var/log/cyberpanel_upgrade_debug.log
+        cp /usr/local/CyberCP/CyberCP/settings.py /tmp/cyberpanel_settings_backup.py
+    fi
+    
+    # Clone fresh CyberPanel repository
+    echo -e "[$(date +"%Y-%m-%d %H:%M:%S")] Cloning fresh CyberPanel repository for recovery..." | tee -a /var/log/cyberpanel_upgrade_debug.log
+    cd /usr/local
+    rm -rf CyberCP_recovery_tmp
+    
+    if git clone https://github.com/usmannasir/cyberpanel CyberCP_recovery_tmp; then
+        echo -e "[$(date +"%Y-%m-%d %H:%M:%S")] Repository cloned successfully for recovery" | tee -a /var/log/cyberpanel_upgrade_debug.log
+        
+        # Checkout the appropriate branch
+        cd CyberCP_recovery_tmp
+        git checkout "$Branch_Name" 2>/dev/null || git checkout stable
+        
+        # Copy missing components while preserving existing configurations
+        for dir in "${CYBERCP_ESSENTIAL_DIRS[@]}"; do
+            if [ ! -d "$dir" ]; then
+                # Extract relative path after /usr/local/CyberCP/
+                relative_path=${dir#/usr/local/CyberCP/}
+                if [ -d "/usr/local/CyberCP_recovery_tmp/$relative_path" ]; then
+                    echo -e "[$(date +"%Y-%m-%d %H:%M:%S")] Restoring missing directory: $dir" | tee -a /var/log/cyberpanel_upgrade_debug.log
+                    mkdir -p "$(dirname "$dir")"
+                    cp -r "/usr/local/CyberCP_recovery_tmp/$relative_path" "$dir"
+                fi
+            fi
+        done
+        
+        # Restore settings.py if it was backed up
+        if [ -f "/tmp/cyberpanel_settings_backup.py" ]; then
+            echo -e "[$(date +"%Y-%m-%d %H:%M:%S")] Restoring backed up settings.py..." | tee -a /var/log/cyberpanel_upgrade_debug.log
+            cp /tmp/cyberpanel_settings_backup.py /usr/local/CyberCP/CyberCP/settings.py
+        fi
+        
+        # Clean up temporary clone
+        rm -rf /usr/local/CyberCP_recovery_tmp
+        
+        echo -e "[$(date +"%Y-%m-%d %H:%M:%S")] Recovery completed. CyberCP structure restored." | tee -a /var/log/cyberpanel_upgrade_debug.log
+    else
+        echo -e "[$(date +"%Y-%m-%d %H:%M:%S")] ERROR: Failed to clone repository for recovery" | tee -a /var/log/cyberpanel_upgrade_debug.log
+        echo -e "[$(date +"%Y-%m-%d %H:%M:%S")] Please run full installation instead of upgrade" | tee -a /var/log/cyberpanel_upgrade_debug.log
+        exit 1
+    fi
+    
+    cd /root/cyberpanel_upgrade_tmp || cd /root
+fi
+
 if [ "$Server_OS" = "Ubuntu" ]; then
   echo -e "[$(date +"%Y-%m-%d %H:%M:%S")] Preparing Ubuntu environment for virtualenv..." | tee -a /var/log/cyberpanel_upgrade_debug.log
   rm -rf /usr/local/CyberPanel
   
-  # For Ubuntu 22.04, ensure we have the latest virtualenv that's compatible
-  if [[ "$Server_OS_Version" = "22" ]]; then
-    echo -e "[$(date +"%Y-%m-%d %H:%M:%S")] Ubuntu 22.04: Installing/upgrading virtualenv with proper dependencies..." | tee -a /var/log/cyberpanel_upgrade_debug.log
-    # Remove system virtualenv if it exists to avoid conflicts
-    apt remove -y python3-virtualenv 2>/dev/null || true
-    # Install latest virtualenv via pip
-    pip3 install --upgrade pip setuptools wheel
-    pip3 install --upgrade virtualenv
+  # For Ubuntu 22.04 and 24.04, handle virtualenv installation properly
+  if [[ "$Server_OS_Version" = "22" ]] || [[ "$Server_OS_Version" = "24" ]]; then
+    if [[ "$Server_OS_Version" = "24" ]]; then
+      echo -e "[$(date +"%Y-%m-%d %H:%M:%S")] Ubuntu 24.04: Using apt for virtualenv installation (externally-managed-environment policy)..." | tee -a /var/log/cyberpanel_upgrade_debug.log
+      # Ubuntu 24.04 has externally-managed-environment, use apt
+      DEBIAN_FRONTEND=noninteractive apt-get install -y python3-virtualenv python3-venv
+    else
+      echo -e "[$(date +"%Y-%m-%d %H:%M:%S")] Ubuntu 22.04: Installing/upgrading virtualenv with proper dependencies..." | tee -a /var/log/cyberpanel_upgrade_debug.log
+      # Remove system virtualenv if it exists to avoid conflicts
+      apt remove -y python3-virtualenv 2>/dev/null || true
+      # Install latest virtualenv via pip
+      pip3 install --upgrade pip setuptools wheel
+      pip3 install --upgrade virtualenv
+    fi
   else
     pip3 install --upgrade virtualenv
   fi
@@ -604,7 +693,10 @@ fi
 if [[ -f /usr/local/CyberPanel/bin/python2 ]]; then
   echo -e "\nPython 2 dectected, doing re-setup...\n"
   rm -rf /usr/local/CyberPanel/bin
-  if [[ "$Server_OS" = "CentOS" ]] && [[ "$Server_OS_Version" = "9" ]]; then
+  if [[ "$Server_OS" = "Ubuntu" ]] && ([[ "$Server_OS_Version" = "22" ]] || [[ "$Server_OS_Version" = "24" ]]); then
+    echo -e "[$(date +"%Y-%m-%d %H:%M:%S")] Ubuntu $Server_OS_Version detected, using python3 -m venv..." | tee -a /var/log/cyberpanel_upgrade_debug.log
+    python3 -m venv /usr/local/CyberPanel
+  elif [[ "$Server_OS" = "CentOS" ]] && [[ "$Server_OS_Version" = "9" ]]; then
     PYTHON_PATH=$(which python3 2>/dev/null || which python3.9 2>/dev/null || echo "/usr/bin/python3")
     virtualenv -p "$PYTHON_PATH" --system-site-packages /usr/local/CyberPanel
   else
@@ -619,7 +711,10 @@ else
 echo -e "\nNothing found, need fresh setup...\n"
 
 # Attempt to create a virtual environment
-if [[ "$Server_OS" = "CentOS" ]] && [[ "$Server_OS_Version" = "9" ]]; then
+if [[ "$Server_OS" = "Ubuntu" ]] && ([[ "$Server_OS_Version" = "22" ]] || [[ "$Server_OS_Version" = "24" ]]); then
+  echo -e "[$(date +"%Y-%m-%d %H:%M:%S")] Ubuntu $Server_OS_Version detected, using python3 -m venv..." | tee -a /var/log/cyberpanel_upgrade_debug.log
+  python3 -m venv /usr/local/CyberPanel
+elif [[ "$Server_OS" = "CentOS" ]] && [[ "$Server_OS_Version" = "9" ]]; then
   PYTHON_PATH=$(which python3 2>/dev/null || which python3.9 2>/dev/null || echo "/usr/bin/python3")
   virtualenv -p "$PYTHON_PATH" --system-site-packages /usr/local/CyberPanel
 else
@@ -651,7 +746,10 @@ if [ $? -ne 0 ]; then
                 # Verify the installation
                 if [ $? -eq 0 ]; then
                     echo "'packaging' module reinstalled and upgraded successfully."
-                    if [[ "$Server_OS" = "CentOS" ]] && [[ "$Server_OS_Version" = "9" ]]; then
+                    if [[ "$Server_OS" = "Ubuntu" ]] && ([[ "$Server_OS_Version" = "22" ]] || [[ "$Server_OS_Version" = "24" ]]); then
+                        echo -e "[$(date +"%Y-%m-%d %H:%M:%S")] Ubuntu $Server_OS_Version detected, using python3 -m venv..." | tee -a /var/log/cyberpanel_upgrade_debug.log
+                        python3 -m venv /usr/local/CyberPanel
+                    elif [[ "$Server_OS" = "CentOS" ]] && [[ "$Server_OS_Version" = "9" ]]; then
                         PYTHON_PATH=$(which python3 2>/dev/null || which python3.9 2>/dev/null || echo "/usr/bin/python3")
                         virtualenv -p "$PYTHON_PATH" --system-site-packages /usr/local/CyberPanel
                     else
@@ -1124,9 +1222,130 @@ rm -f /usr/local/requirments.txt
 chown -R cyberpanel:cyberpanel /usr/local/CyberCP/lib
 chown -R cyberpanel:cyberpanel /usr/local/CyberCP/lib64
 
+# Fix missing lsphp binary in /usr/local/lscp/fcgi-bin/ after upgrade
+echo -e "[$(date +"%Y-%m-%d %H:%M:%S")] Checking and restoring lsphp binary if missing..." | tee -a /var/log/cyberpanel_upgrade_debug.log
+if [[ ! -f /usr/local/lscp/fcgi-bin/lsphp ]] || [[ ! -s /usr/local/lscp/fcgi-bin/lsphp ]]; then
+    echo -e "[$(date +"%Y-%m-%d %H:%M:%S")] lsphp binary missing or empty, attempting to restore..." | tee -a /var/log/cyberpanel_upgrade_debug.log
 
+    # Ensure fcgi-bin directory exists
+    mkdir -p /usr/local/lscp/fcgi-bin
 
-if [[ "$Server_OS_Version" = "9" ]] || [[ "$Server_OS_Version" = "18" ]] || [[ "$Server_OS_Version" = "8" ]] || [[ "$Server_OS_Version" = "20" ]]; then
+    # Find the latest available PHP version and use it
+    PHP_RESTORED=0
+    
+    # Try to find the latest lsphp version (check from newest to oldest)
+    for PHP_VER in 83 82 81 80 74 73 72; do
+        if [[ -f /usr/local/lsws/lsphp${PHP_VER}/bin/lsphp ]]; then
+            # Try to create symlink first (preferred)
+            if ln -sf /usr/local/lsws/lsphp${PHP_VER}/bin/lsphp /usr/local/lscp/fcgi-bin/lsphp 2>/dev/null; then
+                echo -e "[$(date +"%Y-%m-%d %H:%M:%S")] lsphp symlink created from lsphp${PHP_VER}" | tee -a /var/log/cyberpanel_upgrade_debug.log
+            else
+                # If symlink fails, copy the file
+                cp -f /usr/local/lsws/lsphp${PHP_VER}/bin/lsphp /usr/local/lscp/fcgi-bin/lsphp
+                echo -e "[$(date +"%Y-%m-%d %H:%M:%S")] lsphp binary copied from lsphp${PHP_VER}" | tee -a /var/log/cyberpanel_upgrade_debug.log
+            fi
+            chown root:root /usr/local/lscp/fcgi-bin/lsphp
+            chmod 755 /usr/local/lscp/fcgi-bin/lsphp
+            PHP_RESTORED=1
+            break
+        fi
+    done
+
+    # If no lsphp version found, try php binary as fallback
+    if [[ $PHP_RESTORED -eq 0 ]]; then
+        for PHP_VER in 83 82 81 80 74 73 72; do
+            if [[ -f /usr/local/lsws/lsphp${PHP_VER}/bin/php ]]; then
+                # Try to create symlink first (preferred)
+                if ln -sf /usr/local/lsws/lsphp${PHP_VER}/bin/php /usr/local/lscp/fcgi-bin/lsphp 2>/dev/null; then
+                    echo -e "[$(date +"%Y-%m-%d %H:%M:%S")] lsphp symlink created from php${PHP_VER} (lsphp fallback)" | tee -a /var/log/cyberpanel_upgrade_debug.log
+                else
+                    # If symlink fails, copy the file
+                    cp -f /usr/local/lsws/lsphp${PHP_VER}/bin/php /usr/local/lscp/fcgi-bin/lsphp
+                    echo -e "[$(date +"%Y-%m-%d %H:%M:%S")] lsphp binary copied from php${PHP_VER} (lsphp fallback)" | tee -a /var/log/cyberpanel_upgrade_debug.log
+                fi
+                chown root:root /usr/local/lscp/fcgi-bin/lsphp
+                chmod 755 /usr/local/lscp/fcgi-bin/lsphp
+                PHP_RESTORED=1
+                break
+            fi
+        done
+    fi
+    
+    # If no lsphp version found, try admin_php5 as fallback
+    if [[ $PHP_RESTORED -eq 0 ]]; then
+        if [[ -f /usr/local/lscp/admin/fcgi-bin/admin_php5 ]]; then
+            cp -f /usr/local/lscp/admin/fcgi-bin/admin_php5 /usr/local/lscp/fcgi-bin/lsphp
+            chown root:root /usr/local/lscp/fcgi-bin/lsphp
+            chmod 755 /usr/local/lscp/fcgi-bin/lsphp
+            echo -e "[$(date +"%Y-%m-%d %H:%M:%S")] lsphp binary restored from admin_php5 (fallback)" | tee -a /var/log/cyberpanel_upgrade_debug.log
+        elif [[ -f /usr/local/lscp/admin/fcgi-bin/admin_php ]]; then
+            cp -f /usr/local/lscp/admin/fcgi-bin/admin_php /usr/local/lscp/fcgi-bin/lsphp
+            chown root:root /usr/local/lscp/fcgi-bin/lsphp
+            chmod 755 /usr/local/lscp/fcgi-bin/lsphp
+            echo -e "[$(date +"%Y-%m-%d %H:%M:%S")] lsphp binary restored from admin_php (fallback)" | tee -a /var/log/cyberpanel_upgrade_debug.log
+        elif [[ -f /usr/local/lsws/admin/fcgi-bin/admin_php5 ]]; then
+            cp -f /usr/local/lsws/admin/fcgi-bin/admin_php5 /usr/local/lscp/fcgi-bin/lsphp
+            chown root:root /usr/local/lscp/fcgi-bin/lsphp
+            chmod 755 /usr/local/lscp/fcgi-bin/lsphp
+            echo -e "[$(date +"%Y-%m-%d %H:%M:%S")] lsphp binary restored from lsws admin_php5 (fallback)" | tee -a /var/log/cyberpanel_upgrade_debug.log
+        else
+            echo -e "[$(date +"%Y-%m-%d %H:%M:%S")] ERROR: Could not find any PHP binary to restore lsphp" | tee -a /var/log/cyberpanel_upgrade_debug.log
+        fi
+    fi
+    
+    # Create symlinks if they don't exist
+    if [[ -f /usr/local/lscp/fcgi-bin/lsphp ]]; then
+        if [[ ! -f /usr/local/lscp/fcgi-bin/lsphp4 ]]; then
+            ln -sf ./lsphp /usr/local/lscp/fcgi-bin/lsphp4
+        fi
+        if [[ ! -f /usr/local/lscp/fcgi-bin/lsphp5 ]]; then
+            ln -sf ./lsphp /usr/local/lscp/fcgi-bin/lsphp5
+        fi
+    fi
+fi
+
+# Fix missing lscpd binary in /usr/local/lscp/bin/ after upgrade
+echo -e "[$(date +"%Y-%m-%d %H:%M:%S")] Checking and restoring lscpd binary if missing..." | tee -a /var/log/cyberpanel_upgrade_debug.log
+if [[ ! -f /usr/local/lscp/bin/lscpd ]] || [[ ! -s /usr/local/lscp/bin/lscpd ]]; then
+    echo -e "[$(date +"%Y-%m-%d %H:%M:%S")] lscpd binary missing or empty, attempting to restore..." | tee -a /var/log/cyberpanel_upgrade_debug.log
+
+    # Ensure lscp bin directory exists
+    mkdir -p /usr/local/lscp/bin
+
+    # Select the correct lscpd binary based on OS and version
+    lscpd_selection='lscpd-0.3.1'
+
+    # Check if this is an ARM system
+    if uname -a | grep -q 'aarch64'; then
+        lscpd_selection='lscpd.aarch64'
+    else
+        # For x86_64 systems, check Ubuntu version
+        if [[ "$Server_OS" = "Ubuntu" ]] && [[ -f /etc/lsb-release ]]; then
+            ubuntu_version=$(grep 'DISTRIB_RELEASE' /etc/lsb-release | cut -d'=' -f2 | cut -d'.' -f1)
+            if [[ "$ubuntu_version" = "22" ]] || [[ "$ubuntu_version" = "24" ]]; then
+                lscpd_selection='lscpd.0.4.0'
+            fi
+        fi
+    fi
+
+    echo -e "[$(date +"%Y-%m-%d %H:%M:%S")] Selected lscpd binary: $lscpd_selection" | tee -a /var/log/cyberpanel_upgrade_debug.log
+
+    # Copy the selected binary from CyberCP to lscp bin
+    if [[ -f /usr/local/CyberCP/${lscpd_selection} ]]; then
+        cp -f /usr/local/CyberCP/${lscpd_selection} /usr/local/lscp/bin/${lscpd_selection}
+        rm -f /usr/local/lscp/bin/lscpd
+        mv /usr/local/lscp/bin/${lscpd_selection} /usr/local/lscp/bin/lscpd
+        chmod 755 /usr/local/lscp/bin/lscpd
+        chown root:root /usr/local/lscp/bin/lscpd
+        echo -e "[$(date +"%Y-%m-%d %H:%M:%S")] lscpd binary restored successfully from ${lscpd_selection}" | tee -a /var/log/cyberpanel_upgrade_debug.log
+    else
+        echo -e "[$(date +"%Y-%m-%d %H:%M:%S")] ERROR: Could not find lscpd source binary ${lscpd_selection} in /usr/local/CyberCP/" | tee -a /var/log/cyberpanel_upgrade_debug.log
+    fi
+else
+    echo -e "[$(date +"%Y-%m-%d %H:%M:%S")] lscpd binary exists and is valid" | tee -a /var/log/cyberpanel_upgrade_debug.log
+fi
+
+if [[ "$Server_OS_Version" = "9" ]] || [[ "$Server_OS_Version" = "18" ]] || [[ "$Server_OS_Version" = "8" ]] || [[ "$Server_OS_Version" = "20" ]] || [[ "$Server_OS_Version" = "24" ]]; then
     echo "PYTHONHOME=/usr" > /usr/local/lscp/conf/pythonenv.conf
   else
     # Uncomment and use the following lines if necessary for other OS versions
@@ -1134,6 +1353,36 @@ if [[ "$Server_OS_Version" = "9" ]] || [[ "$Server_OS_Version" = "18" ]] || [[ "
     # Check_Return
     :
 fi
+
+# Fix SnappyMail directory permissions for Ubuntu 24.04 and other systems
+echo -e "[$(date +"%Y-%m-%d %H:%M:%S")] Checking SnappyMail directories..." | tee -a /var/log/cyberpanel_upgrade_debug.log
+
+# Create SnappyMail data directories if they don't exist
+mkdir -p /usr/local/lscp/cyberpanel/snappymail/data/_data_/_default_/configs/
+mkdir -p /usr/local/lscp/cyberpanel/snappymail/data/_data_/_default_/domains/
+mkdir -p /usr/local/lscp/cyberpanel/snappymail/data/_data_/_default_/storage/
+mkdir -p /usr/local/lscp/cyberpanel/snappymail/data/_data_/_default_/temp/
+mkdir -p /usr/local/lscp/cyberpanel/snappymail/data/_data_/_default_/cache/
+
+# Ensure proper ownership for SnappyMail data directories
+if id -u lscpd >/dev/null 2>&1; then
+    chown -R lscpd:lscpd /usr/local/lscp/cyberpanel/snappymail/
+    echo -e "[$(date +"%Y-%m-%d %H:%M:%S")] Set SnappyMail ownership to lscpd:lscpd" | tee -a /var/log/cyberpanel_upgrade_debug.log
+else
+    echo -e "[$(date +"%Y-%m-%d %H:%M:%S")] WARNING: lscpd user not found, skipping ownership change" | tee -a /var/log/cyberpanel_upgrade_debug.log
+fi
+
+# Set proper permissions for SnappyMail data directories (group writable)
+chmod -R 775 /usr/local/lscp/cyberpanel/snappymail/data/
+echo -e "[$(date +"%Y-%m-%d %H:%M:%S")] Set SnappyMail data directory permissions to 775 (group writable)" | tee -a /var/log/cyberpanel_upgrade_debug.log
+
+# Ensure web server users are in the lscpd group for access
+usermod -a -G lscpd nobody 2>/dev/null || true
+
+# Fix SnappyMail public directory ownership (critical fix)
+chown -R lscpd:lscpd /usr/local/CyberCP/public/snappymail/data 2>/dev/null || true
+echo -e "[$(date +"%Y-%m-%d %H:%M:%S")] Added web server users to lscpd group and fixed SnappyMail ownership" | tee -a /var/log/cyberpanel_upgrade_debug.log
+
 systemctl restart lscpd
 
 }

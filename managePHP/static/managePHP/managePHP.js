@@ -316,6 +316,12 @@ app.controller('editPHPConfig', function ($scope, $http, $timeout) {
         $('#file_uploads').prop('checked', false);
         $('#allow_url_include').prop('checked', false);
 
+        // Reset variables
+        allow_url_fopen = false;
+        display_errors = false;
+        file_uploads = false;
+        allow_url_include = false;
+
 
         var queryString = window.location.search;
         var searchParams = new URLSearchParams(queryString);
@@ -352,15 +358,19 @@ app.controller('editPHPConfig', function ($scope, $http, $timeout) {
 
                 if (response.data.allow_url_fopen === "1") {
                     $('#allow_url_fopen').prop('checked', true);
+                    allow_url_fopen = true;
                 }
                 if (response.data.display_errors === "1") {
                     $('#display_errors').prop('checked', true);
+                    display_errors = true;
                 }
                 if (response.data.file_uploads === "1") {
                     $('#file_uploads').prop('checked', true);
+                    file_uploads = true;
                 }
                 if (response.data.allow_url_include === "1") {
                     $('#allow_url_include').prop('checked', true);
+                    allow_url_include = true;
                 }
 
                 $scope.loadingPHP = true;

@@ -240,6 +240,53 @@
             white-space: nowrap;
         }
         
+        /* SSL Status Badge */
+        .ssl-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 4px 10px;
+            font-size: 11px;
+            font-weight: 600;
+            border-radius: 20px;
+            gap: 5px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .ssl-badge.valid {
+            background: #f0fdf4;
+            color: #10b981;
+        }
+        
+        .ssl-badge.warning {
+            background: #fef3c7;
+            color: #f59e0b;
+        }
+        
+        .ssl-badge.expiring,
+        .ssl-badge.expired {
+            background: #fee2e2;
+            color: #ef4444;
+        }
+        
+        .ssl-badge.self-signed {
+            background: #fef3c7;
+            color: #f59e0b;
+        }
+        
+        .ssl-badge.none {
+            background: #f3f4f6;
+            color: #9ca3af;
+        }
+        
+        .ssl-badge .wildcard-indicator {
+            background: rgba(255, 255, 255, 0.3);
+            padding: 1px 4px;
+            border-radius: 8px;
+            font-size: 10px;
+            margin-left: 2px;
+        }
+        
         .loading-indicator {
             color: #5b5fcf;
             margin-left: 8px;
@@ -666,6 +713,25 @@
                                 <span class="domain" title="{$ web.domain $}">{$ web.domain $}</span>
                                 <span ng-if="web.loading" class="loading-indicator">
                                     <i class="fa fa-spinner fa-spin"></i>
+                                </span>
+                                <!-- SSL Status Badge -->
+                                <span ng-if="web.ssl" class="ssl-badge" ng-class="web.ssl.status" 
+                                      data-toggle="tooltip" 
+                                      data-placement="top"
+                                      title="{$ getSslTooltip(web) $}">
+                                    <i class="fas" ng-class="{
+                                        'fa-lock': web.ssl.status === 'valid',
+                                        'fa-exclamation-triangle': web.ssl.status === 'warning' || web.ssl.status === 'self-signed',
+                                        'fa-exclamation-circle': web.ssl.status === 'expiring' || web.ssl.status === 'expired',
+                                        'fa-unlock': web.ssl.status === 'none'
+                                    }"></i>
+                                    <span ng-if="web.ssl.status === 'valid'">Secure</span>
+                                    <span ng-if="web.ssl.status === 'warning'">SSL {$ web.ssl.days $}d</span>
+                                    <span ng-if="web.ssl.status === 'expiring'">Expiring {$ web.ssl.days $}d</span>
+                                    <span ng-if="web.ssl.status === 'expired'">Expired</span>
+                                    <span ng-if="web.ssl.status === 'self-signed'">Self-Signed</span>
+                                    <span ng-if="web.ssl.status === 'none'">No SSL</span>
+                                    <span ng-if="web.ssl.is_wildcard" class="wildcard-indicator" title="Wildcard SSL Certificate">*</span>
                                 </span>
                             </div>
                             <div class="row-actions">

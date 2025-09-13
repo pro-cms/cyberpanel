@@ -312,7 +312,7 @@
                                 <div class="input-group">
                                     <input ng-keypress="initiateLogin($event)" ng-model="password" type="password"
                                            class="form-control" id="password" placeholder="Password" required
-                                           name="password" style="height: 45px;">
+                                           name="password" style="height: 45px;" autocomplete="current-password">
                                     <span class="input-group-addon bg-blue">
                       <i class="glyph-icon icon-unlock-alt"></i>
                     </span>
@@ -366,7 +366,7 @@
                 </div>
             </form>
             <div id="loginFailed" class="alert alert-danger">
-                <p>Could Not Login, Error message: {$ errorMessage $}</p>
+                <p>Could Not Login, Error message: <span ng-bind="errorMessage"></span></p>
             </div>
         </div>
     </div>

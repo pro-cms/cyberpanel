@@ -105,7 +105,7 @@
         border-radius: 20px;
         color: white;
         text-decoration: none;
-        font-size: 0.875rem;
+        font-size: 1rem;
         transition: all 0.3s ease;
     }
     
@@ -210,7 +210,7 @@
     .form-label {
         font-weight: 500;
         color: var(--text-primary, #475569);
-        font-size: 0.875rem;
+        font-size: 1rem;
         margin: 0;
     }
     
@@ -218,7 +218,7 @@
         padding: 0.75rem 1rem;
         border: 1px solid var(--border-color, #e8e9ff);
         border-radius: 8px;
-        font-size: 0.875rem;
+        font-size: 1rem;
         transition: all 0.3s ease;
         background: var(--bg-primary, white);
     }
@@ -271,7 +271,7 @@
         background: var(--border-color, #e8e9ff);
         padding: 0.25rem 0.5rem;
         border-radius: 4px;
-        font-size: 0.875rem;
+        font-size: 1rem;
         color: var(--accent-color, #667eea);
     }
     
@@ -334,7 +334,7 @@
     }
     
     .switch-label {
-        font-size: 0.75rem;
+        font-size: 1rem;
         font-weight: 500;
         color: var(--text-secondary, #64748b);
         text-transform: uppercase;
@@ -362,7 +362,7 @@
         padding: 0.75rem 1.5rem;
         border-radius: 8px;
         font-weight: 500;
-        font-size: 0.875rem;
+        font-size: 1rem;
         cursor: pointer;
         transition: all 0.3s ease;
         border: none;
@@ -438,7 +438,7 @@
     
     .editor-title {
         color: var(--text-muted, #94a3b8);
-        font-size: 0.875rem;
+        font-size: 1rem;
         font-weight: 500;
         display: flex;
         align-items: center;
@@ -456,7 +456,7 @@
         border: none;
         padding: 0.375rem 0.75rem;
         border-radius: 6px;
-        font-size: 0.75rem;
+        font-size: 1rem;
         cursor: pointer;
         transition: all 0.2s ease;
     }
@@ -471,7 +471,7 @@
         background: transparent;
         color: var(--success-color, #10b981);
         font-family: 'Monaco', 'Consolas', monospace;
-        font-size: 0.875rem;
+        font-size: 1rem;
         border: none;
         outline: none;
         resize: vertical;
@@ -594,7 +594,7 @@
                     <div class="setting-item">
                         <div class="setting-label">
                             <code>display_errors</code>
-                            <span>{% trans "Show PHP errors to visitors" %}</span>
+                            <span style="font-size: 1rem;">{% trans "Show PHP errors to visitors" %}</span>
                         </div>
                         <div class="setting-control">
                             <div class="switch-wrapper">
@@ -611,7 +611,7 @@
                     <div class="setting-item">
                         <div class="setting-label">
                             <code>file_uploads</code>
-                            <span>{% trans "Allow file uploads" %}</span>
+                            <span style="font-size: 1rem;">{% trans "Allow file uploads" %}</span>
                         </div>
                         <div class="setting-control">
                             <div class="switch-wrapper">
@@ -628,7 +628,7 @@
                     <div class="setting-item">
                         <div class="setting-label">
                             <code>allow_url_fopen</code>
-                            <span>{% trans "Allow opening URLs as files" %}</span>
+                            <span style="font-size: 1rem;">{% trans "Allow opening URLs as files" %}</span>
                         </div>
                         <div class="setting-control">
                             <div class="switch-wrapper">
@@ -645,7 +645,7 @@
                     <div class="setting-item">
                         <div class="setting-label">
                             <code>allow_url_include</code>
-                            <span>{% trans "Allow including URLs" %}</span>
+                            <span style="font-size: 1rem;">{% trans "Allow including URLs" %}</span>
                         </div>
                         <div class="setting-control">
                             <div class="switch-wrapper">
@@ -663,7 +663,7 @@
                     <div class="setting-item">
                         <div class="setting-label">
                             <code>memory_limit</code>
-                            <span>{% trans "Maximum memory per script" %}</span>
+                            <span style="font-size: 1rem;">{% trans "Maximum memory per script" %}</span>
                         </div>
                         <div class="setting-control">
                             <input ng-model="memory_limit" type="text" class="form-control" 
@@ -674,7 +674,7 @@
                     <div class="setting-item">
                         <div class="setting-label">
                             <code>max_execution_time</code>
-                            <span>{% trans "Maximum execution time (seconds)" %}</span>
+                            <span style="font-size: 1rem;">{% trans "Maximum execution time (seconds)" %}</span>
                         </div>
                         <div class="setting-control">
                             <input ng-model="max_execution_time" type="text" class="form-control" 
@@ -685,7 +685,7 @@
                     <div class="setting-item">
                         <div class="setting-label">
                             <code>upload_max_filesize</code>
-                            <span>{% trans "Maximum upload file size" %}</span>
+                            <span style="font-size: 1rem;">{% trans "Maximum upload file size" %}</span>
                         </div>
                         <div class="setting-control">
                             <input ng-model="upload_max_filesize" type="text" class="form-control" 
@@ -696,7 +696,7 @@
                     <div class="setting-item">
                         <div class="setting-label">
                             <code>post_max_size</code>
-                            <span>{% trans "Maximum POST data size" %}</span>
+                            <span style="font-size: 1rem;">{% trans "Maximum POST data size" %}</span>
                         </div>
                         <div class="setting-control">
                             <input ng-model="post_max_size" type="text" class="form-control" 
@@ -707,7 +707,7 @@
                     <div class="setting-item">
                         <div class="setting-label">
                             <code>max_input_time</code>
-                            <span>{% trans "Maximum input parsing time (seconds)" %}</span>
+                            <span style="font-size: 1rem;">{% trans "Maximum input parsing time (seconds)" %}</span>
                         </div>
                         <div class="setting-control">
                             <input ng-model="max_input_time" type="text" class="form-control" 

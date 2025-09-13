@@ -2534,6 +2534,9 @@ Require valid-user
             # Convert numeric state to text
             state = "Active" if website.state == 1 else "Suspended"
 
+            # Get SSL status
+            ssl_status = self.getSSLStatus(website.domain)
+
             json_data.append({
                 'domain': website.domain,
                 'adminEmail': website.adminEmail,
@@ -2543,10 +2546,130 @@ Require valid-user
                 'package': website.package.packageName,
                 'admin': website.admin.userName,
                 'wp_sites': wp_sites,
-                'diskUsed': diskUsed
+                'diskUsed': diskUsed,
+                'ssl': ssl_status
             })
         return json.dumps(json_data)
 
+    def getSSLStatus(self, domain):
+        """Get SSL status for a domain"""
+        try:
+            import OpenSSL
+            from datetime import datetime
+            
+            # Check main domain certificate
+            filePath = '/etc/letsencrypt/live/%s/fullchain.pem' % domain
+            
+            if not os.path.exists(filePath):
+                # Check for wildcard certificate in parent domain
+                parts = domain.split('.')
+                if len(parts) > 2:  # Subdomain like mail.example.com or ftp.example.com
+                    parent_domain = '.'.join(parts[-2:])
+                    wildcard_path = '/etc/letsencrypt/live/%s/fullchain.pem' % parent_domain
+                    if os.path.exists(wildcard_path):
+                        # Check if it's actually a wildcard cert
+                        try:
+                            x509 = OpenSSL.crypto.load_certificate(
+                                OpenSSL.crypto.FILETYPE_PEM,
+                                open(wildcard_path, 'r').read()
+                            )
+                            cn = None
+                            for component in x509.get_subject().get_components():
+                                if component[0].decode('utf-8') == 'CN':
+                                    cn = component[1].decode('utf-8')
+                                    break
+                            
+                            if cn and cn.startswith('*.'):
+                                filePath = wildcard_path
+                                is_wildcard = True
+                            else:
+                                return {'status': 'none', 'days': 0, 'issuer': '', 'is_wildcard': False}
+                        except:
+                            return {'status': 'none', 'days': 0, 'issuer': '', 'is_wildcard': False}
+                    else:
+                        return {'status': 'none', 'days': 0, 'issuer': '', 'is_wildcard': False}
+                else:
+                    return {'status': 'none', 'days': 0, 'issuer': '', 'is_wildcard': False}
+            else:
+                is_wildcard = False
+            
+            # Load and analyze certificate
+            x509 = OpenSSL.crypto.load_certificate(
+                OpenSSL.crypto.FILETYPE_PEM,
+                open(filePath, 'r').read()
+            )
+            
+            # Get expiration date
+            expireData = x509.get_notAfter().decode('ascii')
+            finalDate = datetime.strptime(expireData, '%Y%m%d%H%M%SZ')
+            now = datetime.now()
+            diff = finalDate - now
+            days = diff.days
+            
+            # Get issuer
+            issuer_org = None
+            for component in x509.get_issuer().get_components():
+                if component[0].decode('utf-8') == 'O':
+                    issuer_org = component[1].decode('utf-8')
+                    break
+            
+            if not issuer_org:
+                issuer_org = 'Unknown'
+            
+            # Check if it's a wildcard certificate
+            if not is_wildcard:
+                cn = None
+                for component in x509.get_subject().get_components():
+                    if component[0].decode('utf-8') == 'CN':
+                        cn = component[1].decode('utf-8')
+                        break
+                if cn and cn.startswith('*.'):
+                    is_wildcard = True
+            
+            # Check if it's self-signed by comparing issuer and subject
+            is_self_signed = False
+            issuer_cn = None
+            subject_cn = None
+            
+            for component in x509.get_issuer().get_components():
+                if component[0].decode('utf-8') == 'CN':
+                    issuer_cn = component[1].decode('utf-8')
+                    break
+                    
+            for component in x509.get_subject().get_components():
+                if component[0].decode('utf-8') == 'CN':
+                    subject_cn = component[1].decode('utf-8')
+                    break
+            
+            # Certificate is self-signed if issuer CN equals subject CN
+            if issuer_cn and subject_cn and issuer_cn == subject_cn:
+                is_self_signed = True
+            
+            # Also check if issuer equals subject entirely
+            if x509.get_issuer() == x509.get_subject():
+                is_self_signed = True
+            
+            # Determine status
+            if is_self_signed:
+                status = 'self-signed'
+            elif days < 0:
+                status = 'expired'
+            elif days <= 7:
+                status = 'expiring'
+            elif days <= 30:
+                status = 'warning'
+            else:
+                status = 'valid'
+            
+            return {
+                'status': status,
+                'days': days,
+                'issuer': issuer_org,
+                'is_wildcard': is_wildcard
+            }
+            
+        except Exception as e:
+            return {'status': 'none', 'days': 0, 'issuer': '', 'is_wildcard': False}
 
 
     def findDockersitesListJson(self, Dockersite):

@@ -20,6 +20,7 @@ class ProcessUtilities(multi.Thread):
     ubuntu20 = 3
     ubuntu22Check = 0
     alma9check = 0
+    ubuntu24Check = 0  # New flag for Ubuntu 24.04 specific handling
     server_address = '/usr/local/lscpd/admin/comm.sock'
     token = "unset"
     portPath = '/usr/local/lscp/conf/bind.conf'
@@ -174,7 +175,13 @@ class ProcessUtilities(multi.Thread):
             with open('/etc/os-release', 'r') as f:
                 content = f.read()
                 if 'Ubuntu' in content:
-                    if '22.04' in content:
+                    if '24.04' in content:
+                        ProcessUtilities.ubuntu22Check = 1
+                        ProcessUtilities.ubuntu24Check = 1  # Specific flag for Ubuntu 24.04
+                        # Ubuntu 24.04 uses newer package versions, set flag for compatibility
+                        ProcessUtilities.alma9check = 1  # Reuse flag to indicate Ubuntu 24.04
+                        return ProcessUtilities.ubuntu20
+                    elif '22.04' in content:
                         ProcessUtilities.ubuntu22Check = 1
                         return ProcessUtilities.ubuntu20
                     elif '20.04' in content:

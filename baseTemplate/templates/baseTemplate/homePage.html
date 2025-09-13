@@ -403,34 +403,34 @@
             <div class="stat-card">
                 <div class="stat-card-header">
                     <span class="stat-card-title">CPU USAGE</span>
-                    <span class="stat-card-value">({$ cpuUsage || 40 $}%)</span>
+                    <span class="stat-card-value">({$ cpuUsage $}%)</span>
                 </div>
                 <div class="progress-bar-container">
-                    <div class="progress-bar" style="width: {$ cpuUsage || 40 $}%;"></div>
+                    <div class="progress-bar" style="width: {$ cpuUsage $}%;"></div>
                 </div>
-                <div class="stat-card-info">You've {$ cpuCores || 2 $} Core(s) CPU.</div>
+                <div class="stat-card-info">You've {$ cpuCores $} Core(s) CPU.</div>
             </div>
             
             <div class="stat-card">
                 <div class="stat-card-header">
                     <span class="stat-card-title">MEMORY USAGE</span>
-                    <span class="stat-card-value">({$ ramUsage || 10 $}%)</span>
+                    <span class="stat-card-value">({$ ramUsage $}%)</span>
                 </div>
                 <div class="progress-bar-container">
-                    <div class="progress-bar" style="width: {$ ramUsage || 10 $}%;"></div>
+                    <div class="progress-bar" style="width: {$ ramUsage $}%;"></div>
                 </div>
-                <div class="stat-card-info">You've {$ ramTotalMB || 6192 $} MB Memory.</div>
+                <div class="stat-card-info">You've {$ ramTotalMB $} MB Memory.</div>
             </div>
             
             <div class="stat-card">
                 <div class="stat-card-header">
                     <span class="stat-card-title">DISK USAGE</span>
-                    <span class="stat-card-value">({$ diskUsage || 80 $}%)</span>
+                    <span class="stat-card-value">({$ diskUsage $}%)</span>
                 </div>
                 <div class="progress-bar-container">
-                    <div class="progress-bar" style="width: {$ diskUsage || 80 $}%;"></div>
+                    <div class="progress-bar" style="width: {$ diskUsage $}%;"></div>
                 </div>
-                <div class="stat-card-info">You've {$ diskFreeGB || 80 $} GB remaining out of {$ diskTotalGB || 400 $} GB.</div>
+                <div class="stat-card-info">You've {$ diskFreeGB $} GB remaining out of {$ diskTotalGB $} GB.</div>
             </div>
         </div>
     </div>
