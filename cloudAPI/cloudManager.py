@@ -3,6 +3,7 @@ import socket
 import random
 import os
 import json
+from django.http import HttpResponse
 import userManagment.views as um
 from backup.backupManager import BackupManager
 from databases.databaseManager import DatabaseManager
@@ -3068,7 +3069,23 @@ class CloudManager:
             request.session['userID'] = self.admin.pk
             from filemanager.filemanager import FileManager
             fm = FileManager(request, self.data)
-            return fm.createNewFile()
+            result = fm.createNewFile()
+            
+            # Auto-fix permissions after file creation
+            try:
+                if hasattr(result, 'content'):
+                    import json
+                    result_data = json.loads(result.content)
+                    if result_data.get('status') == 1:
+                        # File created successfully, fix permissions
+                        domainName = self.data.get('domainName')
+                        fileName = self.data.get('fileName')
+                        if domainName and fileName:
+                            self._autoFixFilePermissions(domainName, fileName)
+            except:
+                pass  # Don't break file creation if permission fix fails
+            
+            return result
         except BaseException as msg:
             return self.ajaxPre(0, str(msg))
 
@@ -3078,7 +3095,23 @@ class CloudManager:
             request.session['userID'] = self.admin.pk
             from filemanager.filemanager import FileManager
             fm = FileManager(request, self.data)
-            return fm.createNewFolder()
+            result = fm.createNewFolder()
+            
+            # Auto-fix permissions after folder creation
+            try:
+                if hasattr(result, 'content'):
+                    import json
+                    result_data = json.loads(result.content)
+                    if result_data.get('status') == 1:
+                        # Folder created successfully, fix permissions
+                        domainName = self.data.get('domainName')
+                        folderName = self.data.get('folderName')
+                        if domainName and folderName:
+                            self._autoFixFilePermissions(domainName, folderName)
+            except:
+                pass  # Don't break folder creation if permission fix fails
+            
+            return result
         except BaseException as msg:
             return self.ajaxPre(0, str(msg))
 
@@ -3143,12 +3176,38 @@ class CloudManager:
             return self.ajaxPre(0, str(msg))
 
     def writeFileContents(self, request):
-        """Write file contents"""
+        """Write file contents with base64 support"""
         try:
             request.session['userID'] = self.admin.pk
+            
+            # Check if content is base64 encoded
+            is_base64 = self.data.get('isBase64', False)
+            if is_base64 and 'fileContent' in self.data:
+                import base64
+                try:
+                    self.data['fileContent'] = base64.b64decode(self.data['fileContent']).decode('utf-8')
+                except Exception as e:
+                    return self.ajaxPre(0, f"Base64 decode error: {str(e)}")
+            
             from filemanager.filemanager import FileManager
             fm = FileManager(request, self.data)
-            return fm.writeFileContents()
+            result = fm.writeFileContents()
+            
+            # Auto-fix permissions after writing file
+            try:
+                if hasattr(result, 'content'):
+                    import json
+                    result_data = json.loads(result.content)
+                    if result_data.get('status') == 1:
+                        # File written successfully, fix permissions
+                        domainName = self.data.get('domainName')
+                        fileName = self.data.get('fileName')
+                        if domainName and fileName:
+                            self._autoFixFilePermissions(domainName, fileName)
+            except:
+                pass  # Don't break file writing if permission fix fails
+            
+            return result
         except BaseException as msg:
             return self.ajaxPre(0, str(msg))
 
@@ -3158,7 +3217,30 @@ class CloudManager:
             request.session['userID'] = self.admin.pk
             from filemanager.filemanager import FileManager
             fm = FileManager(request, self.data)
-            return fm.upload()
+            result = fm.upload()
+            
+            # Auto-fix permissions after file upload
+            try:
+                if hasattr(result, 'content'):
+                    import json
+                    result_data = json.loads(result.content)
+                    if result_data.get('status') == 1:
+                        # File uploaded successfully, fix permissions for the upload directory
+                        domainName = self.data.get('domainName')
+                        if domainName:
+                            # For uploads, fix permissions for the entire upload directory
+                            # since we might not know the exact uploaded file names
+                            uploadPath = self.data.get('currentPath') or self.data.get('uploadPath')
+                            if uploadPath:
+                                self._autoFixFilePermissions(domainName, uploadPath)
+                            else:
+                                # Fallback: fix permissions for public_html
+                                publicHtmlPath = f'/home/{domainName}/public_html'
+                                self._autoFixFilePermissions(domainName, publicHtmlPath)
+            except:
+                pass  # Don't break file upload if permission fix fails
+            
+            return result
         except BaseException as msg:
             return self.ajaxPre(0, str(msg))
 
@@ -3168,7 +3250,29 @@ class CloudManager:
             request.session['userID'] = self.admin.pk
             from filemanager.filemanager import FileManager
             fm = FileManager(request, self.data)
-            return fm.extract()
+            result = fm.extract()
+            
+            # Auto-fix permissions after archive extraction
+            try:
+                if hasattr(result, 'content'):
+                    import json
+                    result_data = json.loads(result.content)
+                    if result_data.get('status') == 1:
+                        # Archive extracted successfully, fix permissions for the extraction directory
+                        domainName = self.data.get('domainName')
+                        if domainName:
+                            # Fix permissions for the directory where files were extracted
+                            extractPath = self.data.get('currentPath') or self.data.get('extractPath')
+                            if extractPath:
+                                self._autoFixFilePermissions(domainName, extractPath)
+                            else:
+                                # Fallback: fix permissions for public_html
+                                publicHtmlPath = f'/home/{domainName}/public_html'
+                                self._autoFixFilePermissions(domainName, publicHtmlPath)
+            except:
+                pass  # Don't break extraction if permission fix fails
+            
+            return result
         except BaseException as msg:
             return self.ajaxPre(0, str(msg))
 
@@ -3196,11 +3300,115 @@ class CloudManager:
         """Fix file permissions for a domain"""
         try:
             request.session['userID'] = self.admin.pk
-            from filemanager.filemanager import FileManager
-            fm = FileManager(request, self.data)
-            return fm.fixPermissions(self.data.get('domainName'))
+            
+            # Get domain name
+            domainName = self.data.get('domainName')
+            if not domainName:
+                return self.ajaxPre(0, 'domainName is required')
+            
+            # Check ACL permissions like browser file manager does
+            from plogical.acl import ACLManager
+            currentACL = ACLManager.loadedACL(self.admin.pk)
+            
+            if currentACL['admin'] != 1:
+                return self.ajaxPre(0, 'Only administrators can fix permissions.')
+            
+            # Use the same approach as browser file manager
+            from websiteFunctions.models import Websites
+            from plogical.processUtilities import ProcessUtilities
+            import json
+            
+            try:
+                website = Websites.objects.get(domain=domainName)
+                externalApp = website.externalApp
+
+                if ProcessUtilities.decideDistro() == ProcessUtilities.centos or ProcessUtilities.decideDistro() == ProcessUtilities.cent8:
+                    groupName = 'nobody'
+                else:
+                    groupName = 'nogroup'
+
+                ### symlink checks
+                command = 'ls -la /home/%s' % domainName
+                result = ProcessUtilities.outputExecutioner(command)
+
+                if result.find('->') > -1:
+                    return self.ajaxPre(0, "Symlink attack detected.")
+
+                command = 'chown %s:%s /home/%s' % (website.externalApp, website.externalApp, domainName)
+                ProcessUtilities.executioner(command)
+
+                ### Sym link checks
+                command = 'ls -la /home/%s/public_html/' % domainName
+                result = ProcessUtilities.outputExecutioner(command)
+
+                if result.find('->') > -1:
+                    return self.ajaxPre(0, "Symlink attack detected in public_html.")
+
+                command = 'chown -R -P %s:%s /home/%s/public_html/*' % (externalApp, externalApp, domainName)
+                ProcessUtilities.executioner(command)
+
+                command = 'chown -R -P %s:%s /home/%s/public_html/.[^.]*' % (externalApp, externalApp, domainName)
+                ProcessUtilities.executioner(command)
+
+                command = "find %s -type d -exec chmod 0755 {} \;" % ("/home/" + domainName + "/public_html")
+                ProcessUtilities.executioner(command)
+
+                command = "find %s -type f -exec chmod 0644 {} \;" % ("/home/" + domainName + "/public_html")
+                ProcessUtilities.executioner(command)
+
+                command = 'chown %s:%s /home/%s/public_html' % (externalApp, groupName, domainName)
+                ProcessUtilities.executioner(command)
+
+                command = 'chmod 750 /home/%s/public_html' % (domainName)
+                ProcessUtilities.executioner(command)
+
+                # Handle child domains
+                for childs in website.childdomains_set.all():
+                    command = 'ls -la %s' % childs.path
+                    result = ProcessUtilities.outputExecutioner(command)
+
+                    if result.find('->') > -1:
+                        continue  # Skip this child domain
+
+                    command = "find %s -type d -exec chmod 0755 {} \;" % (childs.path)
+                    ProcessUtilities.executioner(command)
+
+                    command = "find %s -type f -exec chmod 0644 {} \;" % (childs.path)
+                    ProcessUtilities.executioner(command)
+
+                    command = 'chown -R -P %s:%s %s/*' % (externalApp, externalApp, childs.path)
+                    ProcessUtilities.executioner(command)
+
+                    command = 'chown -R -P %s:%s %s/.[^.]*' % (externalApp, externalApp, childs.path)
+                    ProcessUtilities.executioner(command)
+
+                    command = 'chmod 755 %s' % (childs.path)
+                    ProcessUtilities.executioner(command)
+
+                    command = 'chown %s:%s %s' % (externalApp, groupName, childs.path)
+                    ProcessUtilities.executioner(command)
+
+                # Return success response in the same format as browser file manager
+                final_dic = {
+                    'status': 1, 
+                    'permissionsChanged': 1,
+                    'error_message': 'None'
+                }
+                final_json = json.dumps(final_dic)
+                return HttpResponse(final_json)
+                
+            except Websites.DoesNotExist:
+                return self.ajaxPre(0, f'Website {domainName} not found')
+                
         except BaseException as msg:
-            return self.ajaxPre(0, str(msg))
+            # Return same error format as browser file manager
+            final_dic = {
+                'status': 0,
+                'permissionsChanged': 0, 
+                'error_message': str(msg)
+            }
+            final_json = json.dumps(final_dic)
+            return HttpResponse(final_json)
 
     def downloadFile(self, request):
         """Download a file"""
@@ -3404,6 +3612,63 @@ class CloudManager:
 
         except BaseException as msg:
             return self.ajaxPre(0, str(msg))
+
+    def _autoFixFilePermissions(self, domainName, filePath):
+        """
+        Automatically fix permissions for a specific file or folder after creation/upload
+        This is a lightweight version that only fixes the specific file/folder
+        """
+        try:
+            from websiteFunctions.models import Websites
+            from plogical.processUtilities import ProcessUtilities
+            import os
+            
+            if not domainName or not filePath:
+                return
+            
+            try:
+                website = Websites.objects.get(domain=domainName)
+                externalApp = website.externalApp
+                
+                # Ensure the file path is within the domain's directory
+                homePath = f'/home/{domainName}'
+                if not filePath.startswith(homePath):
+                    # If it's a relative path, make it absolute
+                    if not filePath.startswith('/'):
+                        filePath = os.path.join(homePath, 'public_html', filePath.lstrip('./'))
+                    else:
+                        return  # Path is outside domain directory
+                
+                # Check if file/folder exists
+                if not os.path.exists(filePath):
+                    return
+                
+                # Fix ownership of the specific file/folder
+                command = f'chown -R {externalApp}:{externalApp} "{filePath}"'
+                ProcessUtilities.executioner(command)
+                
+                # Set appropriate permissions
+                if os.path.isdir(filePath):
+                    # It's a directory - set 755 and fix contents
+                    command = f'chmod 755 "{filePath}"'
+                    ProcessUtilities.executioner(command)
+                    # Also fix permissions of contents
+                    command = f'find "{filePath}" -type d -exec chmod 755 {{}} \\;'
+                    ProcessUtilities.executioner(command)
+                    command = f'find "{filePath}" -type f -exec chmod 644 {{}} \\;'
+                    ProcessUtilities.executioner(command)
+                else:
+                    # It's a file - set 644
+                    command = f'chmod 644 "{filePath}"'
+                    ProcessUtilities.executioner(command)
+                    
+            except Websites.DoesNotExist:
+                pass  # Domain doesn't exist, skip
+            except Exception:
+                pass  # Any other error, skip silently
+                
+        except Exception:
+            pass  # Fail silently to not break file operations
 
     def _format_file_size(self, size_bytes):
         """Format file size in human readable format"""
